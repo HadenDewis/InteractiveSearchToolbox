@@ -121,7 +121,6 @@ class InteractiveSearchToolbox {
     }
 
     setupToolbox() {
-        console.log('setup')
         // Check for dependencies first
         if (typeof jsPsych !== 'undefined') {
         } else {
@@ -1281,7 +1280,6 @@ class InteractiveSearchToolbox {
 
     turnOnLoadingScreen() {
         this.loadingScreen.style.display = 'flex';
-        console.log('Here')
     }
 
     turnOffLoadingScreen() {
