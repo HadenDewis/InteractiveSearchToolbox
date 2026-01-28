@@ -89,6 +89,7 @@ class InteractiveSearchToolbox {
         this.setupWarningMessage();
         this.setupToolbox();
         this.turnOnLoadingScreen();
+        console.log('here')
     }
 
     setValues(defaultSettings, values) {
@@ -1105,9 +1106,9 @@ class InteractiveSearchToolbox {
         return(parentObj)
     }
     preloadDefaultHDRI(pathToHDRI) {
-        console.log('here')
+        
         const hdrEquirectangularMap = new HDRLoader(this.loadingManager);
-        hdrEquirectangularMap.setCrossOrigin('anonymous');
+        //hdrEquirectangularMap.setCrossOrigin('anonymous');
         hdrEquirectangularMap.load(pathToHDRI, (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
             texture.minFilter = THREE.LinearFilter;
