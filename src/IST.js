@@ -18,8 +18,6 @@ import _ from "lodash";
 let globalSettings
 let lastTime = 0;
 
-console.log('here')
-
 class InteractiveSearchToolbox {
     constructor(userSettings = null) {
         globalSettings = {
@@ -83,6 +81,7 @@ class InteractiveSearchToolbox {
 
         this.objectsInScene = []
 
+        alert('Test')
         this.stats = new Stats();
         document.body.appendChild( this.stats.dom );
         this.stats.dom.style.display = 'none'
