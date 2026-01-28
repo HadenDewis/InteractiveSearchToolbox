@@ -81,7 +81,6 @@ class InteractiveSearchToolbox {
 
         this.objectsInScene = []
 
-        alert('Test')
         this.stats = new Stats();
         document.body.appendChild( this.stats.dom );
         this.stats.dom.style.display = 'none'
@@ -1282,6 +1281,7 @@ class InteractiveSearchToolbox {
 
     turnOnLoadingScreen() {
         this.loadingScreen.style.display = 'flex';
+        console.log('Here')
     }
 
     turnOffLoadingScreen() {
