@@ -1,0 +1,55 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="dist/interactive-search-toolbox.umd.js"></script>
+</head>
+
+<body>
+    <script type="module">
+        const IST = new InteractiveSearchToolbox()
+        IST.preLoadModels(['Models/DISTRACTOR_CUBE_1.glb'])
+
+        IST.loadingManager.onLoad = function () {
+            IST.init(); // Now we've loaded models, initiate the whole package
+
+            // Init all other tools and packages
+            let timeline = [];
+
+            let trial = {
+                type: canvasKeyboardResponse,
+                on_start() {
+                    trialSetup(); // Call this at the start of each trial.
+                },
+                stimulus: function (canvas) {
+                    canvas.style.display = 'none'; // Hide the jsPsych canvas by default.
+                },
+                on_finish() {
+                    IST.trialCleanup(); // Call this at the end of every trial.
+                },
+                choices: ['e', 'i']
+            }
+
+            function trialSetup() {
+                let object = IST.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb')
+                IST.addStimulusToScene(object);
+                IST.camera.position.z = 50;
+                IST.enableOrbitControls();
+                //interactiveSearchToolbox.enableDragControls();
+                //IST.enableDragToRotateControls();
+                IST.startTrial(); // This starts the animation loop
+            }
+
+            // Add trial to the jsPsych timeline
+            timeline.push(trial);
+
+            // Run the jsPsych timeline
+            jsPsych.run(timeline); // Experiment begins now
+        }
+
+    </script>
+</body>
+
+</html>

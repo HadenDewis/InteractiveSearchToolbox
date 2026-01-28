@@ -1,0 +1,40 @@
+{
+  "name": "cdntestagain",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/interactive-search-toolbox.umd.cjs",
+  "module": "./dist/interactive-search-toolbox.js",
+  "unpkg": "./dist/interactive-search-toolbox.umd.cjs",
+  "exports": {
+    ".": {
+      "import": "./dist/interactive-search-toolbox.js",
+      "require": "./dist/interactive-search-toolbox.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "@jspsych/plugin-canvas-button-response": "^2.1.0",
+    "@jspsych/plugin-canvas-keyboard-response": "^2.1.0",
+    "@jspsych/plugin-html-button-response": "^2.1.0",
+    "@jspsych/plugin-html-keyboard-response": "^2.1.0",
+    "@jspsych/plugin-instructions": "^2.1.0",
+    "jspsych": "^8.2.2",
+    "lodash": "^4.17.23",
+    "terser": "^5.46.0",
+    "three": "^0.182.0"
+  }
+}
