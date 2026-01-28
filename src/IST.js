@@ -199,7 +199,7 @@ class InteractiveSearchToolbox {
             }
         });
 
-        this.preloadDefaultHDRI('toolbox_assets/smallStudio.hdr')
+        this.preloadDefaultHDRI('https://github.com/HadenDewis/InteractiveSearchToolbox/blob/main/src/toolbox_assets/smallStudio.hdr')
 
     }
 

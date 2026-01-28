@@ -8,8 +8,10 @@
 
 <body>
     <script type="module">
-        const IST = new InteractiveSearchToolbox()
+        const IST = new InteractiveSearchToolbox({enableHDRI:true})
         IST.preLoadModels(['Models/DISTRACTOR_CUBE_1.glb'])
+
+        console.log(IST)
 
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
