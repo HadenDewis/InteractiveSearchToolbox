@@ -89,7 +89,6 @@ class InteractiveSearchToolbox {
         this.setupWarningMessage();
         this.setupToolbox();
         this.turnOnLoadingScreen();
-        console.log('here')
     }
 
     setValues(defaultSettings, values) {
@@ -353,6 +352,7 @@ class InteractiveSearchToolbox {
 
         this.loadingScreen.appendChild(this.loadingText);
         document.body.appendChild(this.loadingScreen);
+        console.log('here')
     }
 
     calculateGridPositionsInternal(userSettings = null) {
