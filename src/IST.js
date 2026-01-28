@@ -43,7 +43,7 @@ class InteractiveSearchToolbox {
         this.scene;
         this.camera;
         this.renderer;
-        this.enableLighting = this.enableLighting
+        this.enableLighting = true//this.enableLighting
         this.interactiveCanvas;
         this.stimuliInScene = []
         this.selectedObject = null
@@ -1625,13 +1625,5 @@ class InteractiveSearchToolbox {
 
 }
 
-// Create the instance manually inside the file
-const IST = new InteractiveSearchToolbox();
-
-// Export it so npm users can use it
-export { IST };
-
-// Attach it to the window so CDN users have it immediately
-if (typeof window !== 'undefined') {
-    window.IST = IST;
-}
+// If you want it to be the ONLY thing exported:
+export default InteractiveSearchToolbox;
