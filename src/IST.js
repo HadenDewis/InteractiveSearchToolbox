@@ -1104,7 +1104,6 @@ class InteractiveSearchToolbox {
         return(parentObj)
     }
     preloadDefaultHDRI(pathToHDRI) {
-        console.log('here')
         const hdrEquirectangularMap = new HDRLoader(this.loadingManager);
 
         hdrEquirectangularMap.load(pathToHDRI, (texture) => {
