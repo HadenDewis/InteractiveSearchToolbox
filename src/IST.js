@@ -199,7 +199,7 @@ class InteractiveSearchToolbox {
             }
         });
 
-        //this.preloadDefaultHDRI('toolbox_assets/smallStudio.hdr')
+        this.preloadDefaultHDRI('toolbox_assets/smallStudio.hdr')
 
     }
 
