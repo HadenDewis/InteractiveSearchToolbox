@@ -199,7 +199,7 @@ class InteractiveSearchToolbox {
             }
         });
 
-        this.preloadDefaultHDRI('https://github.com/HadenDewis/InteractiveSearchToolbox/blob/main/src/toolbox_assets/smallStudio.hdr')
+        this.preloadDefaultHDRI('https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/toolbox_assets/smallStudio.hdr')
 
     }
 
@@ -1104,6 +1104,7 @@ class InteractiveSearchToolbox {
         return(parentObj)
     }
     preloadDefaultHDRI(pathToHDRI) {
+        console.log('here')
         const hdrEquirectangularMap = new HDRLoader(this.loadingManager);
 
         hdrEquirectangularMap.load(pathToHDRI, (texture) => {
