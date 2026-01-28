@@ -15,12 +15,14 @@
 
 <body>
     <script type="module">
-        console.log(new InteractiveSearchToolbox)
-        //const IST = new InteractiveSearchToolbox({enableHDRI:true})
+        //new InteractiveSearchToolbox
+        //console.log()
+        const IST = new InteractiveSearchToolbox({enableHDRI:true})
         
-        /*
-        IST.preLoadModels(['Models/DISTRACTOR_CUBE_1.glb'])
+        IST.init();
+        //IST.preLoadModels(['Models/DISTRACTOR_CUBE_1.glb'])
 
+        /*
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
 

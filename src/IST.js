@@ -1625,11 +1625,13 @@ class InteractiveSearchToolbox {
 
 }
 
-// Create the instance here
-//const IST = new InteractiveSearchToolbox();
+// Create the instance manually inside the file
+const IST = new InteractiveSearchToolbox();
 
-// Export the instance
-//export { IST };
+// Export it so npm users can use it
+export { IST };
 
-// If you want it to be the ONLY thing exported:
-export default InteractiveSearchToolbox;
+// Attach it to the window so CDN users have it immediately
+if (typeof window !== 'undefined') {
+    window.IST = IST;
+}
