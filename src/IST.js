@@ -121,6 +121,7 @@ class InteractiveSearchToolbox {
     }
 
     setupToolbox() {
+        console.log('setup')
         // Check for dependencies first
         if (typeof jsPsych !== 'undefined') {
         } else {
