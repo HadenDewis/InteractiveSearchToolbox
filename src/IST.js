@@ -18,6 +18,8 @@ import _ from "lodash";
 let globalSettings
 let lastTime = 0;
 
+console.log('here')
+
 class InteractiveSearchToolbox {
     constructor(userSettings = null) {
         globalSettings = {
@@ -352,7 +354,6 @@ class InteractiveSearchToolbox {
 
         this.loadingScreen.appendChild(this.loadingText);
         document.body.appendChild(this.loadingScreen);
-        console.log('here')
     }
 
     calculateGridPositionsInternal(userSettings = null) {
