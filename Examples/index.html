@@ -4,9 +4,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <!--
-    <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactive-search-toolbox.umd.js"></script>
-    -->
+    
     <script src="/dist/interactive-search-toolbox.umd.js"></script>
+    -->
+
+    <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactive-search-toolbox.umd.js"></script>
+    
 </head>
 
 <body>
@@ -14,10 +17,10 @@
         const IST = new InteractiveSearchToolbox({enableHDRI:true})
         IST.preLoadModels(['Models/DISTRACTOR_CUBE_1.glb'])
 
-        console.log(IST)
-
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
+
+            console.log(IST)
 
             // Init all other tools and packages
             let timeline = [];

@@ -1107,7 +1107,7 @@ class InteractiveSearchToolbox {
     preloadDefaultHDRI(pathToHDRI) {
         console.log('here')
         const hdrEquirectangularMap = new HDRLoader(this.loadingManager);
-
+        hdrEquirectangularMap.setCrossOrigin('anonymous');
         hdrEquirectangularMap.load(pathToHDRI, (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
             texture.minFilter = THREE.LinearFilter;
