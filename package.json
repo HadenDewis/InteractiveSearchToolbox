@@ -1,5 +1,5 @@
 {
-  "name": "cdntestagain",
+  "name": "interactivesearchtoolbox",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/interactive-search-toolbox.umd.cjs",
