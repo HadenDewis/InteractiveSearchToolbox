@@ -199,7 +199,7 @@ class InteractiveSearchToolbox {
             }
         });
 
-        this.preloadDefaultHDRI('https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/toolbox_assets/smallStudio.hdr')
+        this.preloadDefaultHDRI('https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@latest/toolbox_assets/smallStudio.hdr')
 
     }
 
