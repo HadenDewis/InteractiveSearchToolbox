@@ -1,4 +1,5 @@
 import 'jspsych/css/jspsych.css'
+import './style.css'
 import {initJsPsych} from "jspsych"
 import instructions from "@jspsych/plugin-instructions"
 import canvasKeyboardResponse from "@jspsych/plugin-canvas-keyboard-response"

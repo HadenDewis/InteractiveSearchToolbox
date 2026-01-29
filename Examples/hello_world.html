@@ -1,0 +1,44 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Search Toolbox</title>
+    <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css"
+        rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+    <script type="module">
+        const IST = new InteractiveSearchToolbox()
+
+        // Preload everything here
+        IST.preLoadModels(['Models/HelloWorld.glb'])
+
+        IST.loadingManager.onLoad = function () {
+            IST.init(); // Now we've loaded models, initiate the whole package
+
+            console.log(IST)
+
+            IST.init() // Now simply call the init() function
+
+            let object = IST.findLoadedItem('Models/HelloWorld.glb')
+
+            IST.addStimulusToScene(object);
+
+            IST.camera.position.z = 50;
+
+            IST.enableDragToRotateControls();
+            IST.startTrial(); // This starts the animation loop
+
+        }
+
+
+
+
+    </script>
+</body>
+
+</html>
