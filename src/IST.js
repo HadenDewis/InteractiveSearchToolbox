@@ -1,5 +1,4 @@
 import 'jspsych/css/jspsych.css'
-import './style.css'
 import {initJsPsych} from "jspsych"
 import instructions from "@jspsych/plugin-instructions"
 import canvasKeyboardResponse from "@jspsych/plugin-canvas-keyboard-response"
@@ -85,6 +84,8 @@ class InteractiveSearchToolbox {
         this.stats = new Stats();
         document.body.appendChild( this.stats.dom );
         this.stats.dom.style.display = 'none'
+
+        document.body.style.margin = "0"; 
 
         this.setupLoadingScreen();
         this.setupWarningMessage();
