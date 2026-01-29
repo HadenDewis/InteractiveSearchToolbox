@@ -136,6 +136,7 @@ class InteractiveSearchToolbox {
         }
 
         this.camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.scene.add(this.camera)
         this.camera.layers.enableAll();
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);

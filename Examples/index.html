@@ -1,4 +1,5 @@
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,17 +9,23 @@
     <script src="/dist/interactive-search-toolbox.umd.js"></script>
     -->
 
-    <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactive-search-toolbox.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
 
 </head>
 
 <body>
     <script type="module">
-        const IST = new InteractiveSearchToolbox({enableHDRI:true, enableAmbientLighting:true})
-        
-        IST.preLoadModels(['Models/DISTRACTOR_CUBE_1.glb'])
+        const IST = new InteractiveSearchToolbox({ enableHDRI: true, enableAmbientLighting: true })
 
+        // Preload everything here
+        let modelsToLoad = ['Models/L.glb','Models/T.glb']
+        let modelsToLoad2 = ['Models/TARGET_CUBE_1.glb']
+        let legoModelsToLoad = ['Models/LEGO.glb']
         
+        IST.preLoadModels(modelsToLoad)
+        IST.preLoadModels(modelsToLoad2)
+        IST.preLoadModels(legoModelsToLoad)
+
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
 
@@ -41,7 +48,7 @@
                 choices: ['e', 'i']
             }
 
-            function trialSetup() {
+            /*function trialSetup() {
                 let object = IST.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb')
                 IST.addStimulusToScene(object);
                 IST.camera.position.z = 50;
@@ -49,6 +56,42 @@
                 //interactiveSearchToolbox.enableDragControls();
                 //IST.enableDragToRotateControls();
                 IST.startTrial(); // This starts the animation loop
+            }*/
+
+            function trialSetup() {
+                // Setup whatever you need to have in your trial here...
+                // You can use any of the tools that come built into the toolbox to help make this easier
+
+                // Once we've loaded in our models, we can find them at any time by using the findLoadedItem function
+                //let object = interactiveSearchToolbox.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb') // The laoded object is now held in memory in the object variable
+                //let object = interactiveSearchToolbox.findLoadedItem('Models/LEGO.glb')
+                let object = IST.findLoadedItem('Models/L.glb')
+                object.scale.set(0.25, 0.25, 0.25)
+
+                // If we want to manually place that object into our scene (canvas) we can do so...
+                IST.addStimulusToScene(object);
+
+
+                // But what if I want to include multiple of the same stimuli within the scene?
+                // You could create multiple objects in the models folder and then load them in when the webpage first starts
+                // Or, much more efficiently, we can load the object once and clone it numerous time
+                // This way we minimise communications with the server and the application remains fast and responsive
+                let clonedObject = IST.cloneObject(object);
+
+                IST.addStimulusToScene(clonedObject); // Manually add the cloned object to the scene 
+                clonedObject.position.x = 5; // Manually move the cloned object to the right by 5 units.
+
+                // We can manually remove the stimulus in a similar way...
+                //IST.removeStimulusFromScene(clonedObject);
+                IST.camera.position.z = 50
+                IST.enableOrbitControls();
+
+                //IST.trialCleanup();
+
+                
+
+                // Start the trial
+                IST.startTrial();
             }
 
             // Add trial to the jsPsych timeline
@@ -58,7 +101,12 @@
             jsPsych.run(timeline); // Experiment begins now
         }
 
+
+
+        
     </script>
 </body>
 
 </html>
+
+
