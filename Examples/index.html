@@ -10,6 +10,7 @@
     -->
 
     <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css" rel="stylesheet" type="text/css" />
 
 </head>
 
@@ -25,11 +26,29 @@
         IST.preLoadModels(modelsToLoad)
         IST.preLoadModels(modelsToLoad2)
         IST.preLoadModels(legoModelsToLoad)
+        IST.preLoadModels(['Models/HelloWorld.glb'])
 
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
 
             console.log(IST)
+
+            IST.init() // Now simply call the init() function
+
+    let object = IST.findLoadedItem('Models/HelloWorld.glb')
+
+    IST.addStimulusToScene(object);
+
+    IST.camera.position.z = 50;
+
+    IST.enableDragToRotateControls();
+    IST.startTrial(); // This starts the animation loop
+
+
+
+
+
+
 
             // Init all other tools and packages
             let timeline = [];
@@ -48,23 +67,13 @@
                 choices: ['e', 'i']
             }
 
-            /*function trialSetup() {
-                let object = IST.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb')
-                IST.addStimulusToScene(object);
-                IST.camera.position.z = 50;
-                IST.enableOrbitControls();
-                //interactiveSearchToolbox.enableDragControls();
-                //IST.enableDragToRotateControls();
-                IST.startTrial(); // This starts the animation loop
-            }*/
-
             function trialSetup() {
                 // Setup whatever you need to have in your trial here...
                 // You can use any of the tools that come built into the toolbox to help make this easier
 
                 // Once we've loaded in our models, we can find them at any time by using the findLoadedItem function
-                //let object = interactiveSearchToolbox.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb') // The laoded object is now held in memory in the object variable
-                //let object = interactiveSearchToolbox.findLoadedItem('Models/LEGO.glb')
+                //let object = IST.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb') // The laoded object is now held in memory in the object variable
+                //let object = IST.findLoadedItem('Models/LEGO.glb')
                 let object = IST.findLoadedItem('Models/L.glb')
                 object.scale.set(0.25, 0.25, 0.25)
 
@@ -84,21 +93,62 @@
                 // We can manually remove the stimulus in a similar way...
                 //IST.removeStimulusFromScene(clonedObject);
                 IST.camera.position.z = 50
-                IST.enableOrbitControls();
+                
 
-                //IST.trialCleanup();
+                IST.trialCleanup();
+
+
+
+
+
+                // Manually placing numerous stimuli is hard work, so let's use one of our helper functions
+                // First, make an array containing all the stimuli we want in the scene - we simply clone the master object 8 times
+                // You could make your own helper function to do this if you wish.
+
+                let objectsForScene = []
+
+                for (let i = 0; i < 16; i++) {
+                    let newObj = IST.cloneObject(object) // Clone the object
+
+                    // Change the colour of the objects randomly
+                    newObj.traverse(function (child) {
+                        if (child.isMesh) {
+                            child.material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xFFFFFF })
+                        }
+                    })
+
+                    newObj.scale.set(0.1, 0.1, 0.1) // Make the object smaller
+
+                    objectsForScene.push(newObj); // Add it to our stimuli array
+                }
+
+
+
+                // Place that array into the helper function - this will randomly place each object into the scene 
+
+                IST.placeRandomly3D({
+                    objectsToPlace:objectsForScene,
+                    randomRotation: true,
+                    //randomRotateZ:true,
+                    spread: 3,
+                    //ignoreCollisions: true
+                });
 
                 
+                //IST.enableOrbitControls();
+                //IST.enableDragControls();
+                IST.enableDragToRotateControls();
 
                 // Start the trial
                 IST.startTrial();
             }
 
             // Add trial to the jsPsych timeline
-            timeline.push(trial);
+            //timeline.push(trial);
 
             // Run the jsPsych timeline
-            jsPsych.run(timeline); // Experiment begins now
+            //jsPsych.run(timeline); // Experiment begins now
+
         }
 
 
