@@ -1,0 +1,109 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Search Toolbox</title>
+    <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css"
+        rel="stylesheet" type="text/css" />
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="module">
+        const IST = new InteractiveSearchToolbox({ enableHDRI: true })
+
+        // Preload everything here
+        let modelsToLoad = ['Models/L.glb', 'Models/T.glb',]
+
+        IST.preLoadModels(modelsToLoad)
+
+        IST.loadingManager.onLoad = function () {
+            IST.init(); // Now we've loaded models, initiate the whole package
+
+            // We saw with the previous tutorial that we can select a loaded object, and manually place that object into our scene using the addStimulusToScene() function
+            let object = IST.findLoadedItem('Models/L.glb')
+            object.scale.set(0.25, 0.25, 0.25)
+
+
+            // Manually placing numerous stimuli is hard work, so let's use one of the helper functions
+            // We will start by creating 16 stimuli for a trial.
+            // To do so, we can make an empty array, clone the master object 16 times and add them to the array each time
+            // You could make your own helper function to do this if you wish.
+
+            // In this example, we are also using three.js to change the colour of each cloned object
+
+            let objectsForScene = []
+
+            for (let i = 0; i < 16; i++) {
+                let newObj = IST.cloneObject(object) // Clone the object
+
+                // Use Three.js to change the colour of the objects randomly
+                newObj.traverse(function (child) {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xFFFFFF })
+                    }
+                })
+
+                newObj.scale.set(0.1, 0.1, 0.1) // Make the object smaller
+
+                objectsForScene.push(newObj); // Add it to our stimuli array
+            }
+
+            // Now we have the 16 stimuli for the trial, we can place them in the scene.
+
+            // To do so, we place that array into one of the helper function
+            // placeOnGrid() will randomly place each object into the scene within a X by Y grid
+
+            /*
+            IST.placeOnGrid({
+                stimuli: objectsForScene,
+                columns: 6,
+                rows: 4,
+                jitter: 0,
+                distanceBetween: 1,
+                showDebugGrid: true,
+                randomPlacement: true,
+                randomRotation: true,
+            });
+            */
+
+            /*
+            IST.placeOnGrid({
+                stimuli: objectsForScene,
+                columns: 6,
+                rows: 4,
+                jitter: 0.1,
+                distanceBetween: 1,
+                showDebugGrid: true,
+                randomPlacement: true,
+                randomRotation: true,
+            });
+            */
+
+            IST.placeOnGrid({
+                stimuli: objectsForScene,
+                columns: 6,
+                rows: 4,
+                jitter: 0.1,
+                distanceBetween: 1,
+                randomPlacement: true,
+                randomRotation: true,
+            });
+            
+            IST.camera.position.z = 100
+            IST.startTrial() // Don't forget to start the trial (animation loop)
+        }
+
+
+
+
+    </script>
+</body>
+
+</html>

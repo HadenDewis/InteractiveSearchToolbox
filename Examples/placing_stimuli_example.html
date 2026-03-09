@@ -1,157 +1,101 @@
 <html lang="en">
 
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Search Toolbox</title>
     <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
     <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css"
         rel="stylesheet" type="text/css" />
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
 </head>
 
 <body>
     <script type="module">
-        const IST = new InteractiveSearchToolbox({ enableHDRI: true, enableAmbientLighting: true })
+        const IST = new InteractiveSearchToolbox({ enableHDRI: true })
 
         // Preload everything here
-        let modelsToLoad = ['Models/L.glb','Models/T.glb']
-        let modelsToLoad2 = ['Models/TARGET_CUBE_1.glb']
-        let legoModelsToLoad = ['Models/LEGO.glb']
-        
+        let modelsToLoad = ['Models/L.glb', 'Models/T.glb',]
+
         IST.preLoadModels(modelsToLoad)
-        IST.preLoadModels(modelsToLoad2)
-        IST.preLoadModels(legoModelsToLoad)
-        IST.preLoadModels(['Models/HelloWorld.glb'])
 
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
 
-            console.log(IST)
+            // We saw with the previous tutorial that we can select a loaded object, and manually place that object into our scene using the addStimulusToScene() function
+            let object = IST.findLoadedItem('Models/L.glb')
+            object.scale.set(0.25, 0.25, 0.25)
 
-            IST.init() // Now simply call the init() function
+            // But what if you want to include multiple of the same stimuli within the scene?
+            // You could create multiple objects in the models folder and then load them in when the webpage first starts
+            // Or, much more efficiently, we can load the object once and clone it numerous time
+            // This way we minimise communications with the server and the application remains fast and responsive
+            let clonedObject = IST.cloneObject(object);
 
-    let object = IST.findLoadedItem('Models/HelloWorld.glb')
+            IST.addStimulusToScene(clonedObject); // Manually add the cloned object to the scene 
+            clonedObject.position.x = 5; // Manually move the cloned object to the right by 5 units.
 
-    IST.addStimulusToScene(object);
+            // We can manually remove the stimulus from the scene in a similar way...
+            IST.removeStimulusFromScene(clonedObject);
 
-    IST.camera.position.z = 50;
+            IST.camera.position.z = 50
 
-    IST.enableDragToRotateControls();
-    IST.startTrial(); // This starts the animation loop
+            // But manually placing numerous stimuli is hard work, so let's use one of the helper functions
+            // We will start by creating 16 stimuli for a trial.
+            // To do so, we can make an empty array, clone the master object 16 times and add them to the array each time
+            // You could make your own helper function to do this if you wish.
 
+            // In this example, we are also using three.js to change the colour of each cloned object
 
+            let objectsForScene = []
 
+            for (let i = 0; i < 16; i++) {
+                let newObj = IST.cloneObject(object) // Clone the object
 
+                // Use Three.js to change the colour of the objects randomly
+                newObj.traverse(function (child) {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xFFFFFF })
+                    }
+                })
 
+                newObj.scale.set(0.1, 0.1, 0.1) // Make the object smaller
 
-
-            // Init all other tools and packages
-            let timeline = [];
-
-            let trial = {
-                type: canvasKeyboardResponse,
-                on_start() {
-                    trialSetup(); // Call this at the start of each trial.
-                },
-                stimulus: function (canvas) {
-                    canvas.style.display = 'none'; // Hide the jsPsych canvas by default.
-                },
-                on_finish() {
-                    IST.trialCleanup(); // Call this at the end of every trial.
-                },
-                choices: ['e', 'i']
+                objectsForScene.push(newObj); // Add it to our stimuli array
             }
 
-            function trialSetup() {
-                // Setup whatever you need to have in your trial here...
-                // You can use any of the tools that come built into the toolbox to help make this easier
+            // Now we have the 16 stimuli for the trial, we can place them in the scene.
 
-                // Once we've loaded in our models, we can find them at any time by using the findLoadedItem function
-                //let object = IST.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb') // The laoded object is now held in memory in the object variable
-                //let object = IST.findLoadedItem('Models/LEGO.glb')
-                let object = IST.findLoadedItem('Models/L.glb')
-                object.scale.set(0.25, 0.25, 0.25)
+            // To do so, we place that array into one of the helper function
+            // placeRandomly3D() will randomly place each object into the scene along all three axes.
+            
+            IST.placeRandomly3D({
+                objectsToPlace: objectsForScene,
+                randomRotation: true,
+                spread: 3,
+            });
 
-                // If we want to manually place that object into our scene (canvas) we can do so...
-                IST.addStimulusToScene(object);
+            // placeRandomly2D() will randomly place each object into the scene along only two axes.
+            /*
+            IST.placeRandomly2D({
+                objectsToPlace: objectsForScene,
+                randomRotateZ: true, // Randomly rotate one axis only
+                axisOrder: 'XY',
+                spread: 3
+            })
+            */
 
-
-                // But what if I want to include multiple of the same stimuli within the scene?
-                // You could create multiple objects in the models folder and then load them in when the webpage first starts
-                // Or, much more efficiently, we can load the object once and clone it numerous time
-                // This way we minimise communications with the server and the application remains fast and responsive
-                let clonedObject = IST.cloneObject(object);
-
-                IST.addStimulusToScene(clonedObject); // Manually add the cloned object to the scene 
-                clonedObject.position.x = 5; // Manually move the cloned object to the right by 5 units.
-
-                // We can manually remove the stimulus in a similar way...
-                //IST.removeStimulusFromScene(clonedObject);
-                IST.camera.position.z = 50
-                
-
-                IST.trialCleanup();
-
-
-
-
-
-                // Manually placing numerous stimuli is hard work, so let's use one of our helper functions
-                // First, make an array containing all the stimuli we want in the scene - we simply clone the master object 8 times
-                // You could make your own helper function to do this if you wish.
-
-                let objectsForScene = []
-
-                for (let i = 0; i < 16; i++) {
-                    let newObj = IST.cloneObject(object) // Clone the object
-
-                    // Change the colour of the objects randomly
-                    newObj.traverse(function (child) {
-                        if (child.isMesh) {
-                            child.material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xFFFFFF })
-                        }
-                    })
-
-                    newObj.scale.set(0.1, 0.1, 0.1) // Make the object smaller
-
-                    objectsForScene.push(newObj); // Add it to our stimuli array
-                }
-
-
-
-                // Place that array into the helper function - this will randomly place each object into the scene 
-
-                IST.placeRandomly3D({
-                    objectsToPlace:objectsForScene,
-                    randomRotation: true,
-                    //randomRotateZ:true,
-                    spread: 3,
-                    //ignoreCollisions: true
-                });
-
-                
-                //IST.enableOrbitControls();
-                //IST.enableDragControls();
-                IST.enableDragToRotateControls();
-
-                // Start the trial
-                IST.startTrial();
-            }
-
-            // Add trial to the jsPsych timeline
-            //timeline.push(trial);
-
-            // Run the jsPsych timeline
-            //jsPsych.run(timeline); // Experiment begins now
-
+            IST.startTrial() // Don't forget to start the trial (animation loop)
         }
 
 
 
-        
+
     </script>
 </body>
 
 </html>
-
-

@@ -3,17 +3,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <!--
     <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
     <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css" rel="stylesheet" type="text/css" />
+    -->
+    <script type="module" src="src/IST.js"></script>
 </head>
 
 <body>
+    <!--<script type = 'module' src = 'test.js'></script>-->
+    
     <script type="module">
-        const IST = new InteractiveSearchToolbox()
-        IST.preLoadModels(['Models/DISTRACTOR_CUBE_1.glb'])
+        import InteractiveSearchToolbox from '/src/IST.js'
+        
+        const IST = new InteractiveSearchToolbox({enableAmbientLighting:false})
+        IST.preLoadModels(
+            ['Examples/Models/DISTRACTOR_CUBE_1.glb', 
+            'Examples/Models/gazeContingentPlane.glb',
+            'Examples/Models/firstPerson.glb']
+        )
 
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
+            IST.showDebugStats()
 
             // Init all other tools and packages
             let timeline = [];
@@ -32,24 +44,95 @@
                 choices: ['e', 'i']
             }
 
+            let count = 0
             function trialSetup() {
-                let object = IST.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb')
+
+                //let obj = IST.findLoadedObject('Examples/Models/burgerpiz.glb')
+                //IST.addStimulusToScene(obj)
+                IST.enableFirstPersonControls(0.5)
+                //IST.enableOrbitControls()
+
+                
+                
+                IST.update = function (){ 
+                    console.log('here')
+                }
+
+                /*
+                let object = IST.findLoadedObject('Examples/Models/DISTRACTOR_CUBE_1.glb')
+                let stimuliToPlace = []
+                
+                for(let i = 0; i < 8; i++){
+                    let newObj = IST.cloneObject(object)
+                    //newObj.scale.set(1.5,1.5,1.5)
+                    stimuliToPlace.push(newObj)
+                }
+                
+                IST.placeOnGrid({
+                    stimuli: stimuliToPlace,
+                    rows: 4,
+                    columns: 4,
+                    showDebugGrid: false,
+                    jitter: 0.1,
+                    randomRotation:true
+                })
+                */
+                
+                let object = IST.findLoadedObject('Examples/Models/firstPerson.glb')
                 IST.addStimulusToScene(object);
-                IST.camera.position.z = 50;
-                IST.enableOrbitControls();
-                //interactiveSearchToolbox.enableDragControls();
+                
+                const light = new THREE.PointLight( 0xFFF6E8, 1500, 50 );
+                light.position.set( 0, 15, 0 );
+                IST.scene.add( light );
+                
+                IST.camera.fov = 50
+                IST.camera.updateProjectionMatrix();
+                
+                IST.camera.position.y = 1; 
+                //IST.camera.lookAt(0,0,0)
+                
+                //let gridObj = IST.calculateGridPositions({rows:6, columns:6, cameraAxis:'Z'})
+                //gridObj.debugGrid.visible = true
+                
+                
+                //
+                //IST.enableDragControls();
                 //IST.enableDragToRotateControls();
+                if(count == 0){
+                    //IST.enableOrbitControls()
+                    /*IST.enableGazeContingentControls({
+                        maskType:'blur', 
+                        numberOfBlurPasses:4, 
+                        blurIntensity:0.6,
+                        tintBlur:true, 
+                        tintAmount:0.6,
+                    })
+
+                    IST.setGazeRadius(0.1,0.001)
+                    IST.setBlurIntensity(1)*/
+            
+                }else{
+                    IST.enableGazeContingentControls({maskType:'opaque'})
+                    IST.setGazeRadius(0.1,0.01)
+                }
+                
+                //IST.enableOrbitControls();
+
+                //IST.setGazeContingentMaskColour('ashdfh')
                 IST.startTrial(); // This starts the animation loop
+                count++
+                
             }
 
             // Add trial to the jsPsych timeline
-            timeline.push(trial);
+            timeline.push(trial,trial);
 
             // Run the jsPsych timeline
             jsPsych.run(timeline); // Experiment begins now
         }
 
     </script>
+
 </body>
 
 </html>
