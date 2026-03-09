@@ -59,33 +59,8 @@
 
             // To do so, we place that array into one of the helper function
             // placeOnGrid() will randomly place each object into the scene within a X by Y grid
-
-            /*
-            IST.placeOnGrid({
-                stimuli: objectsForScene,
-                columns: 6,
-                rows: 4,
-                jitter: 0,
-                distanceBetween: 1,
-                showDebugGrid: true,
-                randomPlacement: true,
-                randomRotation: true,
-            });
-            */
-
-            /*
-            IST.placeOnGrid({
-                stimuli: objectsForScene,
-                columns: 6,
-                rows: 4,
-                jitter: 0.1,
-                distanceBetween: 1,
-                showDebugGrid: true,
-                randomPlacement: true,
-                randomRotation: true,
-            });
-            */
-
+            // Explanation of settings can be found within the docs 
+            
             IST.placeOnGrid({
                 stimuli: objectsForScene,
                 columns: 6,
@@ -94,6 +69,7 @@
                 distanceBetween: 1,
                 randomPlacement: true,
                 randomRotation: true,
+                showDebugGrid: true
             });
             
             IST.camera.position.z = 100

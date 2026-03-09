@@ -11,39 +11,16 @@
 
 <body>
     <script type="module">
+        const VS_COLOURS = ["#ff643c", "#f73232", "#f50a64", "#eb00aa", "#b432b4", "#6e3bc8", "#2d78eb", "#35a5eb", "#30aaab", "#3c966e", "#3cc85a", "#78be00", "#bed200", "#ebeb00", "#d7c300", "#f0aa02"];
         const IST = new InteractiveSearchToolbox({ enableHDRI: true, enableAmbientLighting: true })
 
         // Preload everything here
-        let modelsToLoad = ['Models/L.glb','Models/T.glb']
-        let modelsToLoad2 = ['Models/TARGET_CUBE_1.glb']
-        let legoModelsToLoad = ['Models/LEGO.glb']
+        let modelsToLoad = ['Models/DISTRACTOR_CUBE.glb','Models/TARGET_CUBE.glb']
         
         IST.preLoadModels(modelsToLoad)
-        IST.preLoadModels(modelsToLoad2)
-        IST.preLoadModels(legoModelsToLoad)
-        IST.preLoadModels(['Models/HelloWorld.glb'])
-
+        
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
-
-            console.log(IST)
-
-            IST.init() // Now simply call the init() function
-
-    let object = IST.findLoadedObject('Models/HelloWorld.glb')
-
-    IST.addStimulusToScene(object);
-
-    IST.camera.position.z = 50;
-
-    IST.enableDragToRotateControls();
-    IST.startTrial(); // This starts the animation loop
-
-
-
-
-
-
 
             // Init all other tools and packages
             let timeline = [];
@@ -51,7 +28,7 @@
             let trial = {
                 type: canvasKeyboardResponse,
                 on_start() {
-                    trialSetup(); // Call this at the start of each trial.
+                    trialSetup(); // Call this at the start of each trial - This is a user made function where we decide what we want in our trial and how to do it!
                 },
                 stimulus: function (canvas) {
                     canvas.style.display = 'none'; // Hide the jsPsych canvas by default.
@@ -62,17 +39,26 @@
                 choices: ['e', 'i']
             }
 
+            let goodbyeTrial = {
+                type: htmlButtonResponse,
+                stimulus: '<p>This is the end of the experiment. Press the button below to finish.</p>',
+                choices: ['End Experiment'],
+            }
+
+            IST.camera.position.z = 50;
+            IST.enableDragToRotateControls();
+
+            
+
             function trialSetup() {
                 // Setup whatever you need to have in your trial here...
                 // You can use any of the tools that come built into the toolbox to help make this easier
 
                 // Once we've loaded in our models, we can find them at any time by using the findLoadedObject function
-                //let object = IST.findLoadedObject('Models/DISTRACTOR_CUBE_1.glb') // The laoded object is now held in memory in the object variable
-                //let object = IST.findLoadedObject('Models/LEGO.glb')
-                let object = IST.findLoadedObject('Models/L.glb')
+                let object = IST.findLoadedObject('Models/DISTRACTOR_CUBE.glb')
                 object.scale.set(0.25, 0.25, 0.25)
 
-                // If we want to manually place that object into our scene (canvas) we can do so...
+                // If we want to manually place that object into our scene (canvas) without using any of the helpers we can do so...
                 IST.addStimulusToScene(object);
 
 
@@ -89,7 +75,6 @@
                 //IST.removeStimulusFromScene(clonedObject);
                 IST.camera.position.z = 50
                 
-
                 IST.trialCleanup();
 
 
@@ -100,49 +85,63 @@
                 // First, make an array containing all the stimuli we want in the scene - we simply clone the master object 8 times
                 // You could make your own helper function to do this if you wish.
 
+                // In this example we will make 16 cubes that people have to search through to find a T shape.
+                // 15 of these cubes will contain L shapes and one of them will contain a T shape.
                 let objectsForScene = []
 
-                for (let i = 0; i < 16; i++) {
-                    let newObj = IST.cloneObject(object) // Clone the object
+                let distractor_cube = IST.findLoadedObject('Models/DISTRACTOR_CUBE.glb')
+                let target_cube = IST.findLoadedObject('Models/TARGET_CUBE.glb')
+                // Here we're creating 15 distractor cubes
+                for (let i = 0; i < 15; i++) {
+                    let newObj = IST.cloneObject(distractor_cube) // Clone the object
 
                     // Change the colour of the objects randomly
                     newObj.traverse(function (child) {
-                        if (child.isMesh) {
-                            child.material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xFFFFFF })
+                        if (child.isMesh & !child.name.includes('_')) {
+                            child.material = new THREE.MeshStandardMaterial({ color: _.sample(VS_COLOURS) })
+                        }else{
+                            child.material = new THREE.MeshStandardMaterial({ color: '#FFFFFF' })
                         }
                     })
 
-                    newObj.scale.set(0.1, 0.1, 0.1) // Make the object smaller
+                    newObj.scale.set(0.25, 0.25, 0.25) // Make the object smaller
 
                     objectsForScene.push(newObj); // Add it to our stimuli array
                 }
 
-
+                // And then we will also add a single target cube
+                let new_target_object = IST.cloneObject(target_cube)
+                new_target_object.traverse(function (child) {
+                        if (child.isMesh & !child.name.includes('_')) {
+                            child.material = new THREE.MeshStandardMaterial({ color: _.sample(VS_COLOURS) })
+                        }else{
+                            child.material = new THREE.MeshStandardMaterial({ color: '#FFFFFF' })
+                        }
+                    })
+                new_target_object.scale.set(0.25, 0.25, 0.25) // Make the object smaller
+                objectsForScene.push(new_target_object); // Add it to our stimuli array
 
                 // Place that array into the helper function - this will randomly place each object into the scene 
-
-                IST.placeRandomly3D({
+                IST.placeRandomly2D({
                     objectsToPlace:objectsForScene,
                     randomRotation: true,
-                    //randomRotateZ:true,
-                    spread: 3,
-                    //ignoreCollisions: true
+                    spread: 3
                 });
 
                 
-                //IST.enableOrbitControls();
+                IST.enableOrbitControls();
                 //IST.enableDragControls();
-                IST.enableDragToRotateControls();
+                //IST.enableDragToRotateControls();
 
                 // Start the trial
                 IST.startTrial();
             }
 
             // Add trial to the jsPsych timeline
-            //timeline.push(trial);
+            timeline.push(trial,goodbyeTrial);
 
             // Run the jsPsych timeline
-            //jsPsych.run(timeline); // Experiment begins now
+            jsPsych.run(timeline); // Experiment begins now
 
         }
 

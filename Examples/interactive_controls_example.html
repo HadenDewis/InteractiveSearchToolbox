@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Search Toolbox</title>
+    
+
     <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
     <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css"
         rel="stylesheet" type="text/css" />
@@ -11,22 +13,14 @@
 
 <body>
     <script type="module">
+        
         const IST = new InteractiveSearchToolbox({ enableHDRI: true, enableAmbientLighting: true })
 
         // Preload everything here
-        let modelsToLoad = ['Models/L.glb', 'Models/T.glb']
-        let modelsToLoad2 = ['Models/TARGET_CUBE_1.glb']
-        let legoModelsToLoad = ['Models/LEGO.glb']
-
+        let modelsToLoad = ['Models/L.glb', 'Models/T.glb','Models/TARGET_CUBE.glb','Models/Brick.glb','Models/HelloWorld.glb']
+        
         IST.preLoadModels(modelsToLoad)
-        IST.preLoadModels(modelsToLoad2)
-        IST.preLoadModels(legoModelsToLoad)
-        IST.preLoadModels(['Models/HelloWorld.glb'])
-
-        
-        
-        
-        
+                
         
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
@@ -35,7 +29,7 @@
             helloWorldObject.position.x = 0
             IST.addStimulusToScene(helloWorldObject);
 
-            let cubeObject = IST.findLoadedObject('Models/TARGET_CUBE_1.glb')
+            let cubeObject = IST.findLoadedObject('Models/TARGET_CUBE.glb')
             cubeObject.scale.set(0.5, 0.5,0.5)
             cubeObject.position.set(-3.5, 3,0)
             IST.addStimulusToScene(cubeObject);
@@ -50,16 +44,27 @@
             T_Object.position.set(-3.5, -2, 0)
             IST.addStimulusToScene(T_Object);
 
-            let brickObject = IST.findLoadedObject('Models/LEGO.glb')
+            let brickObject = IST.findLoadedObject('Models/Brick.glb')
             brickObject.scale.set(0.25, 0.25, 0.25)
             brickObject.position.set(3.5, -2, 0)
             IST.addStimulusToScene(brickObject);
 
             IST.camera.position.z = 50;
             
-            IST.enableDragToRotateControls(); // Enable the type of interaction controls you want
-            IST.enableOrbitControls();
-            IST.enableDragControls(); 
+            // Enable the type of interaction controls you want
+
+            //IST.enableDragToRotateControls(); 
+            //IST.enableOrbitControls();
+            //IST.enableDragControls(); 
+            
+            //IST.enableGazeContingentControls({maskType:'opaque'})
+            //IST.setGazeRadius(0.1,0.01)
+
+            //IST.enableGazeContingentControls({maskType:'blur', blurIntensity: 1})
+            //IST.setGazeRadius(0.1,0.01)
+
+            IST.enableGazeContingentControls({maskType:'transparent', opacity:1})
+            IST.setGazeRadius(0.1,0.01)
             
             IST.startTrial(); // This starts the animation loop
 
