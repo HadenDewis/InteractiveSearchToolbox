@@ -582,6 +582,7 @@ class InteractiveSearchToolbox {
         if (obj != null) {
             if (this.pointerDown) {
                 let pos = this.mouseToWorld(obj.position)
+                console.log(pos)
                 obj.parent.worldToLocal(pos);
                 obj.position.copy(pos);
             }

@@ -30,7 +30,7 @@
 
             IST.init() // Now simply call the init() function
 
-    let object = IST.findLoadedItem('Models/HelloWorld.glb')
+    let object = IST.findLoadedObject('Models/HelloWorld.glb')
 
     IST.addStimulusToScene(object);
 
@@ -66,10 +66,10 @@
                 // Setup whatever you need to have in your trial here...
                 // You can use any of the tools that come built into the toolbox to help make this easier
 
-                // Once we've loaded in our models, we can find them at any time by using the findLoadedItem function
-                //let object = IST.findLoadedItem('Models/DISTRACTOR_CUBE_1.glb') // The laoded object is now held in memory in the object variable
-                //let object = IST.findLoadedItem('Models/LEGO.glb')
-                let object = IST.findLoadedItem('Models/L.glb')
+                // Once we've loaded in our models, we can find them at any time by using the findLoadedObject function
+                //let object = IST.findLoadedObject('Models/DISTRACTOR_CUBE_1.glb') // The laoded object is now held in memory in the object variable
+                //let object = IST.findLoadedObject('Models/LEGO.glb')
+                let object = IST.findLoadedObject('Models/L.glb')
                 object.scale.set(0.25, 0.25, 0.25)
 
                 // If we want to manually place that object into our scene (canvas) we can do so...
