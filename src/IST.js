@@ -30,6 +30,7 @@ let yAxis = new THREE.Vector3(0, 1, 0)
 let zAxis = new THREE.Vector3(0, 1, 0)
 let worldPointer = new THREE.Vector3(0, 0, 0.5);
 let distance_vector = new THREE.Vector3(0, 0, 0)
+let worldPos = new THREE.Vector3();
 
 let warningBox;
 let warningBoxText;
@@ -240,9 +241,9 @@ class InteractiveSearchToolbox {
         this.finalPass
         this.hBlur
         this.vBlur
-        
+
         this.mouseSensitivity = 0.002;
-        
+
         this.blurSettings = {
             intensity: 1.5 // 1.0 is standard, 0.0 is no blur, 5.0+ is very heavy
         };
@@ -413,6 +414,7 @@ class InteractiveSearchToolbox {
 
             // Reset currentRaycastObject
             this.currentRaycastObject = null;
+            this.selectedObject = null
 
             // Update pointer flags
             this.pointerUp = true;
@@ -493,24 +495,24 @@ class InteractiveSearchToolbox {
         this.helperControls = true
     }
 
-    enableFirstPersonControls(sensitivity = null){
+    enableFirstPersonControls(sensitivity = null) {
         this.disableOrbitControls()
         this.disableDragControls()
         this.disableDragToRotateControls()
         this.disableGazeContingentControls()
-        
-        xAxis.set(1,0,0)
-        yAxis.set(0,1,0)
-        zAxis.set(0,0,1)
 
-        if(sensitivity != null){
+        xAxis.set(1, 0, 0)
+        yAxis.set(0, 1, 0)
+        zAxis.set(0, 0, 1)
+
+        if (sensitivity != null) {
             this.mouseSensitivity = sensitivity
         }
-        
+
         this.FPControlsEnabled = true;
     }
 
-    disableFirstPersonControls(){
+    disableFirstPersonControls() {
         this.FPControlsEnabled = false;
     }
 
@@ -556,9 +558,8 @@ class InteractiveSearchToolbox {
             // Get the intersecting object
             const temp_selection = intersects[0].object
 
-            // Loop through and select the top parent object of the intersecting object
-            // This stops us from rotating/moving individual meshes within groups
-            let keepChecking = true;
+            
+            /*let keepChecking = true;
             while (keepChecking) {
                 let parent = temp_selection.parent
                 let grid_parent = temp_selection.grid_parent
@@ -570,7 +571,18 @@ class InteractiveSearchToolbox {
                     this.currentRaycastObject = parent;
                     break
                 }
+            }*/
+            
+                // Loop through and select the top parent object of the intersecting object
+            // This stops us from rotating/moving individual meshes within groups
+            let temp = temp_selection;
+
+            while (temp.parent && temp.parent !== this.scene && temp.parent !== temp.grid_parent) {
+                temp = temp.parent;
             }
+
+            this.currentRaycastObject = temp;
+
         } else {
             this.currentRaycastObject = null
         }
@@ -581,10 +593,13 @@ class InteractiveSearchToolbox {
     dragControls(event, obj = null) {
         if (obj != null) {
             if (this.pointerDown) {
-                let pos = this.mouseToWorld(obj.position)
-                console.log(pos)
+                // Get the object's world position
+                obj.getWorldPosition(worldPos);
+
+                let pos = this.mouseToWorld(worldPos);
                 obj.parent.worldToLocal(pos);
                 obj.position.copy(pos);
+                worldPos.set(0, 0, 0)
             }
         }
     }
@@ -612,11 +627,13 @@ class InteractiveSearchToolbox {
         }
     }
 
-    firstPersonControls(event){
-        if(this.pointerDown){
+    
+
+    firstPersonControls(event) {
+        if (this.pointerDown) {
             this.camera.rotateOnWorldAxis(yAxis, this.pointerDelta.x * this.mouseSensitivity);
             this.camera.rotateOnAxis(xAxis, this.pointerDelta.y * this.mouseSensitivity);
-            
+
             xAxis.set(1, 0, 0) // Reset to default
             yAxis.set(0, 1, 0) // Reset to default
         }
@@ -1499,9 +1516,9 @@ class InteractiveSearchToolbox {
         this.disableGazeContingentControls()
         this.disableFirstPersonControls()
 
-        xAxis.set(1,0,0)
-        yAxis.set(0,1,0)
-        zAxis.set(0,0,1)
+        xAxis.set(1, 0, 0)
+        yAxis.set(0, 1, 0)
+        zAxis.set(0, 0, 1)
 
         this.orbitControls.enabled = true;
         this.orbitControlsEnabled = true;
@@ -1518,9 +1535,9 @@ class InteractiveSearchToolbox {
         this.disableGazeContingentControls()
         this.disableFirstPersonControls()
 
-        xAxis.set(1,0,0)
-        yAxis.set(0,1,0)
-        zAxis.set(0,0,1)
+        xAxis.set(1, 0, 0)
+        yAxis.set(0, 1, 0)
+        zAxis.set(0, 0, 1)
 
         this.dragControlsEnabled = true;
     }
@@ -1535,9 +1552,9 @@ class InteractiveSearchToolbox {
         this.disableGazeContingentControls()
         this.disableFirstPersonControls()
 
-        xAxis.set(1,0,0)
-        yAxis.set(0,1,0)
-        zAxis.set(0,0,1)
+        xAxis.set(1, 0, 0)
+        yAxis.set(0, 1, 0)
+        zAxis.set(0, 0, 1)
 
         this.dragToRotateEnabled = true;
     }
@@ -1591,9 +1608,9 @@ class InteractiveSearchToolbox {
         this.disableOrbitControls()
         this.disableFirstPersonControls()
 
-        xAxis.set(1,0,0)
-        yAxis.set(0,1,0)
-        zAxis.set(0,0,1)
+        xAxis.set(1, 0, 0)
+        yAxis.set(0, 1, 0)
+        zAxis.set(0, 0, 1)
 
         this.gazeContingentControls = settings
         this.gazeContingentEnabled = true;
@@ -1604,7 +1621,7 @@ class InteractiveSearchToolbox {
     // ADD COLOUR SETTER FOR MASKS 
     setupBlurMask(controlSettings) {
         this.maskType = 'blur'
-        
+
         this.mainComposer = new EffectComposer(this.renderer);
         this.mainComposer.addPass(new RenderPass(this.scene, this.camera));
         this.blurRT = new THREE.WebGLRenderTarget(window.innerWidth / 2, window.innerHeight / 2, { antialias: true });
@@ -1616,11 +1633,11 @@ class InteractiveSearchToolbox {
         this.hBlur.uniforms['h'].value = 1 / (window.innerWidth / 2);
         this.vBlur.uniforms['v'].value = 1 / (window.innerHeight / 2);
 
-        for(let i = 0; i < controlSettings.numberOfBlurPasses; i++){
+        for (let i = 0; i < controlSettings.numberOfBlurPasses; i++) {
             this.blurComposer.addPass(this.hBlur);
             this.blurComposer.addPass(this.vBlur);
         }
-        
+
         this.finalPass = new ShaderPass(BlurMaskShader);
         this.finalPass.renderToScreen = true;
 
@@ -1661,16 +1678,16 @@ class InteractiveSearchToolbox {
         this.finalPass.uniforms.maskColor.value.set(colour) // Set the colour
     }
 
-    setGazeRadius(size, softness = null){
+    setGazeRadius(size, softness = null) {
         this.finalPass.uniforms.radius.value = size
-        
-        if(softness != null){
+
+        if (softness != null) {
             this.finalPass.uniforms.softness.value = softness
         }
     }
 
-    setBlurIntensity(amount){
-        if(this.gazeContingentControls){
+    setBlurIntensity(amount) {
+        if (this.gazeContingentControls) {
             this.gazeContingentControls.blurIntensity = amount
         }
     }

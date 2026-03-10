@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
     <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css" rel="stylesheet" type="text/css" />
     -->
-    <script type="module" src="src/IST.js"></script>
+    
 </head>
 
 <body>
@@ -16,12 +16,8 @@
     <script type="module">
         import InteractiveSearchToolbox from '/src/IST.js'
         
-        const IST = new InteractiveSearchToolbox({enableAmbientLighting:false})
-        IST.preLoadModels(
-            ['Examples/Models/DISTRACTOR_CUBE_1.glb', 
-            'Examples/Models/gazeContingentPlane.glb',
-            'Examples/Models/firstPerson.glb']
-        )
+        const IST = new InteractiveSearchToolbox({enableAmbientLighting:true})
+        IST.preLoadModels(['Examples/Models/TARGET_CUBE.glb', 'Examples/Models/DISTRACTOR_CUBE.glb', 'Examples/Models/firstPerson.glb'])
 
         IST.loadingManager.onLoad = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
@@ -47,21 +43,46 @@
             let count = 0
             function trialSetup() {
 
-                //let obj = IST.findLoadedObject('Examples/Models/burgerpiz.glb')
-                //IST.addStimulusToScene(obj)
-                IST.enableFirstPersonControls(0.5)
-                //IST.enableOrbitControls()
-
                 
+                //IST.enableOrbitControls()
                 
                 IST.update = function (){ 
-                    console.log('here')
+                    
+                    // Currently selected object (e.g., mouse button is pressed down)
+                    if(IST.selectedObject != null){
+                        let x = IST.selectedObject.position.x
+                        let y = IST.selectedObject.position.y
+                        let z = IST.selectedObject.position.z
+
+                        let x_rot = IST.selectedObject.quaternion.x
+                        let y_rot = IST.selectedObject.quaternion.y
+                        let z_rot = IST.selectedObject.quaternion.z
+                        let w_rot = IST.selectedObject.quaternion.w
+                        
+                        console.log("Selected Object Position:", x,y,z)
+                        console.log("Selected Object Quaternion:", x_rot,y_rot,z_rot,w_rot)
+                    }
+
+                    // Currently raycast object (e.g., what the cursor is hovering over)
+                    if(IST.currentRaycastObject != null){
+                        console.log("Raycast Object:", IST.currentRaycastObject.name)
+                    }
                 }
 
-                /*
-                let object = IST.findLoadedObject('Examples/Models/DISTRACTOR_CUBE_1.glb')
-                let stimuliToPlace = []
                 
+                let cubeObject = IST.findLoadedObject('Examples/Models/DISTRACTOR_CUBE.glb')
+                cubeObject.scale.set(0.5, 0.5,0.5)
+                cubeObject.position.set(-3.5, 3,0)
+                cubeObject.rotation.set(10,-10,20)
+                IST.addStimulusToScene(cubeObject);
+
+                //IST.enableGazeContingentControls({maskType:'opaque'})
+                //IST.setGazeRadius(0.1,0.01)
+                
+                //IST.addStimulusToScene(object);
+                
+                
+                /*
                 for(let i = 0; i < 8; i++){
                     let newObj = IST.cloneObject(object)
                     //newObj.scale.set(1.5,1.5,1.5)
@@ -78,6 +99,7 @@
                 })
                 */
                 
+                /*
                 let object = IST.findLoadedObject('Examples/Models/firstPerson.glb')
                 IST.addStimulusToScene(object);
                 
@@ -87,16 +109,19 @@
                 
                 IST.camera.fov = 50
                 IST.camera.updateProjectionMatrix();
-                
-                IST.camera.position.y = 1; 
-                //IST.camera.lookAt(0,0,0)
+
+                IST.enableFirstPersonControls(0.5)
+                */
+
+                IST.camera.position.z = 150; 
+                IST.camera.lookAt(0,0,0)
                 
                 //let gridObj = IST.calculateGridPositions({rows:6, columns:6, cameraAxis:'Z'})
                 //gridObj.debugGrid.visible = true
                 
                 
                 //
-                //IST.enableDragControls();
+                IST.enableDragControls();
                 //IST.enableDragToRotateControls();
                 if(count == 0){
                     //IST.enableOrbitControls()
