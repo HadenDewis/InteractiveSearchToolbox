@@ -21,12 +21,11 @@
             IST.showDebugStats()
 
             let helloWorldObject = IST.findLoadedObject('Models/HelloWorld.glb')
-            helloWorldObject.position.x = 0
             IST.addStimulusToScene(helloWorldObject);
 
             let cubeObject = IST.findLoadedObject('Models/TARGET_CUBE.glb')
             cubeObject.scale.set(0.5, 0.5,0.5)
-            cubeObject.position.set(-3.5, 3,0)
+            cubeObject.position.set(-3.5, 3, 0)
             IST.addStimulusToScene(cubeObject);
 
             let L_Object = IST.findLoadedObject('Models/L.glb')
@@ -48,8 +47,8 @@
             IST.camera.lookAt(0,0,0)
             IST.enableDragToRotateControls();
 
+            
             IST.update = function (){ 
-                    
                     // Currently selected object (e.g., mouse button is pressed down)
                     if(IST.selectedObject != null){
                         let x = IST.selectedObject.position.x
@@ -71,6 +70,7 @@
                     }
                 }
 
+                IST.startTrial()
                 
 
         }

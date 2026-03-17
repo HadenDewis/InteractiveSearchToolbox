@@ -256,7 +256,9 @@ class InteractiveSearchToolbox {
         this.pointerDelta = new THREE.Vector2();
         this.previousPointer = new THREE.Vector2();
         this.delta = 0
-        this.clock = new THREE.Clock();
+        this.currentFrameTime = 0
+        this.timer = new THREE.Timer();
+        this.timer.connect( document );
 
         this.worldPosition = new THREE.Vector3()
         //this.zOffset = 5
@@ -1482,8 +1484,12 @@ class InteractiveSearchToolbox {
         }
 
         this.update() // Process loop - user can put their own code here
+        
         if (this.checkStats) { this.stats.update(); }
-        this.delta = this.clock.getDelta();
+        this.delta = this.timer.getDelta();
+        this.currentFrameTime = this.timer.getElapsed() * 1000;
+        this.timer.update()
+        console.log(this.currentFrameTime)
     }
 
     // ADD POINTER LOCK INTO THE FP CONTROLS
@@ -1505,7 +1511,8 @@ class InteractiveSearchToolbox {
     }
 
     startTrial() {
-        this.clock.start();
+        //this.timer.start();
+        this.timer.reset()
         this.startAnimationLoop();
         this.interactiveCanvas.style.display = 'flex'
     }
