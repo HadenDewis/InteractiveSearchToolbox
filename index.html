@@ -11,22 +11,61 @@
 </head>
 
 <body>
-    <!--<script type = 'module' src = 'test.js'></script>-->
-    
     <script type="module">
         import InteractiveSearchToolbox from '/src/IST.js'
         
-        const IST = new InteractiveSearchToolbox({enableAmbientLighting:true})
-        IST.preLoadModels(['Examples/Models/TARGET_CUBE.glb', 'Examples/Models/DISTRACTOR_CUBE.glb', 'Examples/Models/firstPerson.glb'])
+        // For the sake of this example, we will enable HDRI for some quick lighting
+        const IST = new InteractiveSearchToolbox({enableHDRI:true, enableAmbientLighting:true})
+        IST.ambientLight.intensity = 10
+        
+        // Setup some basic variables which we will use throughout
+        const timeline = []; // JsPsych timeline
+        const distractors = [] // Array to hold our distractor stimuli
+        const targets = [] // Array to hold our target stimuli
+        const trialTypes = _.shuffle(['PRESENT_INNER_HIGH','PRESENT_INNER_LOW','PRESENT_OUTER_HIGH','PRESENT_OUTER_LOW','ABSENT_INNER', 'ABSENT_OUTER','ABSENT_INNER', 'ABSENT_OUTER']) // Array for our trial types
+        let currentTrialCount = 0
 
-        IST.loadingManager.onLoad = function () {
+        // Would be nice to create a spacing tool that does this for us
+        const innerRingLocations = [[5.18, 0.0, -0.0], [-5.18, 0.0, -0.0], [-3.66, -0.0, 3.66], [-0.0, 0.0, 5.18], [3.66, -0.0, 3.66], [-3.66, 0.0, -3.66], [-0.0, 0.0, -5.18], [3.66, 0.0, -3.66]];
+        const outerRingLocations = [[-7.32, 0.0, -7.32], [0.0, 0.0, -10.35], [-10.35, 0.0, -0.0], [7.32, 0.0, -7.32], [10.35, -0.0, -0.0], [7.32, -0.0, 7.32], [0.0, -0.0, 10.35], [-7.32, -0.0, 7.32]];
+
+        // Randomly select the colours - Here we select a first colour, then the second colour is always 7 steps away from the first
+        const firstValue = _.random(0, 15, false);
+        let secondValue = firstValue + 7;
+        
+        // If we reach the end of our colour list, wrap back around to the start
+        if (secondValue > 15) {
+            secondValue = 0 + (secondValue % 15)
+        }
+
+        const colourList = ['#F0AA02', '#D7C300', '#EBEB00', '#BED200', '#78BE00', '#3CC85A', '#3C966E', '#30AAAB', '#35A5EB', '#2D78EB', '#6E3BC8', '#B432B4', '#EB00AA', '#F50A64', '#F73232', '#FF643C']
+        const colourSelection = [colourList[firstValue], colourList[secondValue]];
+
+        
+        // Now we can begin by loading our stimuli - note that for the sake of quicker loading, we only load two stimuli - we can copy these master stimuli and change their appearence at runtime instead
+        IST.preLoadModels(['Examples/Models/TARGET_CUBE.glb', 'Examples/Models/DISTRACTOR_CUBE.glb'])
+
+        // Due to the asynchronous nature of loading files, we use the onPreloadFinished callback to ensure we only begin doing things after the models have loaded
+        IST.onPreloadFinished = function () {
             IST.init(); // Now we've loaded models, initiate the whole package
-            IST.showDebugStats()
+            //IST.showDebugStats()
 
-            // Init all other tools and packages
-            let timeline = [];
+            IST.enableDataCollection({realTimeTracking:true}); // Allow us to easily record interaction data
 
-            let trial = {
+            IST.addGlobalData("DATE",new Date().toUTCString()) // Manually add a date stamp to our data file - this could be whatever data you wanted though
+            
+            // Enable the interactive controls
+            IST.enableDragToRotateControls(
+                    {
+                        varySensitivity:true,   
+                        sensitivityFlags:{
+                            "HIGH":34, // Any objects that have the text HIGH in their name will have a reduced sensitivity of 34% (relative to the overall sensitivity)
+                            "LOW":100
+                        }
+                    }); 
+            
+
+            const trial = {
                 type: canvasKeyboardResponse,
                 on_start() {
                     trialSetup(); // Call this at the start of each trial.
@@ -35,122 +74,167 @@
                     canvas.style.display = 'none'; // Hide the jsPsych canvas by default.
                 },
                 on_finish() {
+                    IST.addData("TRIAL_TYPE","SEARCH_TRIAL") // Adding data to our interactive data for that specific trial.
+                    IST.addData("TRIAL_END_DATE_STAMP",new Date().toUTCString())
+                    currentTrialCount++;
                     IST.trialCleanup(); // Call this at the end of every trial.
                 },
-                choices: ['e', 'i']
+                choices: ['z', 'm']
             }
 
-            let count = 0
-            function trialSetup() {
-
-                
-                //IST.enableOrbitControls()
-                
-                IST.update = function (){ 
+            const debrief_trial = {
+                type: htmlButtonResponse,
+                on_start() {
+                    IST.turnOnLoadingScreen("Saving data, please wait!")
+                    IST.saveData(); // Automatically download - set optional argument to true if you wish to use the file picker instead.
                     
-                    // Currently selected object (e.g., mouse button is pressed down)
-                    if(IST.selectedObject != null){
-                        let x = IST.selectedObject.position.x
-                        let y = IST.selectedObject.position.y
-                        let z = IST.selectedObject.position.z
+                    const myData = IST.getInteractiveData() // If you are not using a local machine and you need to send your data to a server, call the getInteractiveData() function and then handle sending that data object to the server
 
-                        let x_rot = IST.selectedObject.quaternion.x
-                        let y_rot = IST.selectedObject.quaternion.y
-                        let z_rot = IST.selectedObject.quaternion.z
-                        let w_rot = IST.selectedObject.quaternion.w
-                        
-                        console.log("Selected Object Position:", x,y,z)
-                        console.log("Selected Object Quaternion:", x_rot,y_rot,z_rot,w_rot)
+                    IST.turnOffLoadingScreen()
+                    // See our recommendations for handling data with servers on our documentation site.
+                    console.log(myData)
+
+
+                },
+                stimulus: `<p>This is the end of the experiment!</p>`,
+                on_finish() {
+                },
+                choices: ['Finish Experiment']
+            }
+
+            // Inside this function, we will create the stimuli we need for each trial.
+            // We will clone the master objects that we uploaded, rename them, and change their colour to the values we chose earlier
+            function setupStimuli(){
+                
+                for(let i = 0; i < 4; i++){
+                    const cloned_cube = IST.findLoadedObject('DISTRACTOR_CUBE').clone()
+
+                    if(i < 2){
+                        const newName = "DISTRACTOR_CUBE_LOW_" + (i + 1)
+                        cloned_cube.name = newName
+
+                    }else{
+                        const newName = "DISTRACTOR_CUBE_HIGH_" + ((i + 1) - 2)
+                        cloned_cube.name = newName
                     }
 
-                    // Currently raycast object (e.g., what the cursor is hovering over)
-                    if(IST.currentRaycastObject != null){
-                        console.log("Raycast Object:", IST.currentRaycastObject.name)
+                    // Next we change the colour of the main cube (it's name is either T_BASE or D_BASE)
+                    // Traverse loops through all items within the threejs object
+                    cloned_cube.traverse((o) => {
+                        // If the object is a mesh object
+                        if (o.isMesh) {
+                            // If the mesh object we're inspecting includes the name BASE it is the one we want
+                            if(o.name.includes("BASE")){
+                                // If the cloned object we're working with is high effort, assign it colour 1 else assign it colour 2
+                                if(cloned_cube.name.includes("HIGH")){
+                                    o.material = new THREE.MeshStandardMaterial( {color: colourSelection[0]})
+                                }else{
+                                    o.material = new THREE.MeshStandardMaterial( {color: colourSelection[1]})
+                                }
+                            }
+                        }
+                    });
+
+                    distractors.push(cloned_cube)
+                }
+
+                for(let i = 0; i < 2; i++){
+                    const cloned_target_cube = IST.findLoadedObject('TARGET_CUBE').clone()
+
+                    if(i == 0){
+                        cloned_target_cube.name = "TARGET_CUBE_LOW_1"
+                    }else{
+                        cloned_target_cube.name = "TARGET_CUBE_HIGH_1"
                     }
+
+                    // Next we change the colour of the main cube (it's name is either T_BASE or D_BASE)
+                    cloned_target_cube.traverse((o) => {
+                        // If the object is a mesh object
+                        if (o.isMesh) {
+                            // If the mesh object we're inspecting includes the name BASE it is the one we want
+                            if(o.name.includes("BASE")){
+                                // If the cloned object we're working with is high effort, assign it colour 1 else assign it colour 2
+                                if(cloned_target_cube.name.includes("HIGH")){
+                                    o.material = new THREE.MeshStandardMaterial( {color: colourSelection[0]})
+                                }else{
+                                    o.material = new THREE.MeshStandardMaterial( {color: colourSelection[1]})
+                                }
+                            }
+                        }
+                    });
+
+                    targets.push(cloned_target_cube)
                 }
 
-                
-                let cubeObject = IST.findLoadedObject('Examples/Models/DISTRACTOR_CUBE.glb')
-                cubeObject.scale.set(0.5, 0.5,0.5)
-                cubeObject.position.set(-3.5, 3,0)
-                cubeObject.rotation.set(10,-10,20)
-                IST.addStimulusToScene(cubeObject);
+                // Now we have our high effort and low effort cubes in their associated arrays in their randomly assigned colours.
+                // We can select from these arrays rather than creating the stimuli every trial and rather than needing to load all possible colours of stimuli
+            }
 
-                //IST.enableGazeContingentControls({maskType:'opaque'})
-                //IST.setGazeRadius(0.1,0.01)
+            
+            function trialSetup() {
+                const trial_type = trialTypes[currentTrialCount]
                 
-                //IST.addStimulusToScene(object);
-                
-                
-                /*
-                for(let i = 0; i < 8; i++){
-                    let newObj = IST.cloneObject(object)
-                    //newObj.scale.set(1.5,1.5,1.5)
-                    stimuliToPlace.push(newObj)
+                const D_1_HIGH = IST.findLoadedObject("DISTRACTOR_CUBE_HIGH_1",distractors)
+                const D_2_HIGH = IST.findLoadedObject("DISTRACTOR_CUBE_HIGH_2",distractors)
+                const D_1_LOW = IST.findLoadedObject("DISTRACTOR_CUBE_LOW_1",distractors)
+                const D_2_LOW = IST.findLoadedObject("DISTRACTOR_CUBE_LOW_2",distractors)
+                const T_1_HIGH = IST.findLoadedObject("TARGET_CUBE_HIGH_1",targets)
+                const T_1_LOW = IST.findLoadedObject("TARGET_CUBE_LOW_1",targets)
+                let trial_stimuli = []
+                let trial_placement_locations = []
+
+                // Detect which trial type we're on, and randomise the positions accordingly and select the correct stimuli for that trial
+                switch (trial_type) {
+                    case "PRESENT_INNER_HIGH":
+                        trial_placement_locations = _.shuffle(innerRingLocations)
+                        trial_stimuli = _.shuffle([D_1_LOW,D_2_LOW,D_1_HIGH,T_1_HIGH])
+                        break;
+                    case "PRESENT_INNER_LOW":
+                        trial_placement_locations = _.shuffle(innerRingLocations)
+                        trial_stimuli = _.shuffle([D_1_HIGH,D_2_HIGH,D_1_LOW,T_1_LOW])
+                        break;
+                    case "PRESENT_OUTER_HIGH":
+                        trial_placement_locations = _.shuffle(outerRingLocations)
+                        trial_stimuli = _.shuffle([D_1_LOW,D_2_LOW,D_1_HIGH,T_1_HIGH])
+                        break
+                    case "PRESENT_OUTER_LOW":
+                        trial_placement_locations = _.shuffle(outerRingLocations)
+                        trial_stimuli = _.shuffle([D_1_HIGH,D_2_HIGH,D_1_LOW,T_1_LOW])
+                        break
+                    case "ABSENT_INNER":
+                        trial_placement_locations = _.shuffle(innerRingLocations)
+                        trial_stimuli = _.shuffle([D_1_HIGH,D_2_HIGH,D_1_LOW,D_2_LOW])
+                        break;
+                    default:
+                        // ABSENT_OUTER
+                        trial_placement_locations = _.shuffle(outerRingLocations)
+                        trial_stimuli = _.shuffle([D_1_HIGH,D_2_HIGH,D_1_LOW,D_2_LOW])
+                        break;
                 }
-                
-                IST.placeOnGrid({
-                    stimuli: stimuliToPlace,
-                    rows: 4,
-                    columns: 4,
-                    showDebugGrid: false,
-                    jitter: 0.1,
-                    randomRotation:true
-                })
-                */
-                
-                /*
-                let object = IST.findLoadedObject('Examples/Models/firstPerson.glb')
-                IST.addStimulusToScene(object);
-                
-                const light = new THREE.PointLight( 0xFFF6E8, 1500, 50 );
-                light.position.set( 0, 15, 0 );
-                IST.scene.add( light );
-                
-                IST.camera.fov = 50
-                IST.camera.updateProjectionMatrix();
 
-                IST.enableFirstPersonControls(0.5)
-                */
+                // Finally, add the stimuli to the scene
+                for(let i = 0; i < trial_stimuli.length; i++){
+                    const object = trial_stimuli[i]
+                    object.rotation.set(_.random(-6.28,6.28,true),_.random(-6.28,6.28,true),_.random(-6.28,6.28,true))
+                    object.position.set(trial_placement_locations[i][0],trial_placement_locations[i][2],trial_placement_locations[i][1])
+                    IST.addStimulusToScene(object);
+                }
+
 
                 IST.camera.position.z = 150; 
                 IST.camera.lookAt(0,0,0)
                 
-                //let gridObj = IST.calculateGridPositions({rows:6, columns:6, cameraAxis:'Z'})
-                //gridObj.debugGrid.visible = true
-                
-                
-                //
-                IST.enableDragControls();
-                //IST.enableDragToRotateControls();
-                if(count == 0){
-                    //IST.enableOrbitControls()
-                    /*IST.enableGazeContingentControls({
-                        maskType:'blur', 
-                        numberOfBlurPasses:4, 
-                        blurIntensity:0.6,
-                        tintBlur:true, 
-                        tintAmount:0.6,
-                    })
-
-                    IST.setGazeRadius(0.1,0.001)
-                    IST.setBlurIntensity(1)*/
-            
-                }else{
-                    IST.enableGazeContingentControls({maskType:'opaque'})
-                    IST.setGazeRadius(0.1,0.01)
-                }
-                
-                //IST.enableOrbitControls();
-
-                //IST.setGazeContingentMaskColour('ashdfh')
-                IST.startTrial(); // This starts the animation loop
-                count++
-                
+                IST.startTrial(); // This starts the animation loop   
             }
 
-            // Add trial to the jsPsych timeline
-            timeline.push(trial,trial);
+            setupStimuli()
+
+            // Add trials to the jsPsych timeline
+            for(let i = 0; i < trialTypes.length; i++){
+                timeline.push(trial);
+            }
+            
+            timeline.push(debrief_trial)
 
             // Run the jsPsych timeline
             jsPsych.run(timeline); // Experiment begins now

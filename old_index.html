@@ -1,0 +1,155 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!--
+    <script src="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/IST.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/gh/HadenDewis/InteractiveSearchToolbox@main/dist/interactivesearchtoolbox.css" rel="stylesheet" type="text/css" />
+    -->
+    
+</head>
+
+<body>
+    <!--<script type = 'module' src = 'test.js'></script>-->
+    
+    <script type="module">
+        import InteractiveSearchToolbox from '/src/IST.js'
+        
+        const IST = new InteractiveSearchToolbox({enableAmbientLighting:true})
+        
+        IST.preLoadModels(['Examples/Models/TARGET_CUBE.glb', 'Examples/Models/DISTRACTOR_CUBE.glb', /*'Examples/Models/firstPerson.glb'*/])
+
+        IST.onPreloadFinished = function () {
+            IST.init(); // Now we've loaded models, initiate the whole package
+            IST.showDebugStats()
+            IST.addGlobalData("DATE",new Date().toUTCString())
+            //IST.addData("TRIAL_TYPE_START","SEARCH_TRIAL_START")
+            
+
+            // Init all other tools and packages
+            let timeline = [];
+
+            let trial = {
+                type: canvasKeyboardResponse,
+                on_start() {
+                    trialSetup(); // Call this at the start of each trial.
+
+                    //IST.addData("TRIAL_TYPE_START","SEARCH_TRIAL_START") // IST.startTrial() will produce a new data row everytime it is called, so any additional data you want to add needs to be added AFTER calling startTrial().
+                },
+                stimulus: function (canvas) {
+                    canvas.style.display = 'none'; // Hide the jsPsych canvas by default.
+                },
+                on_finish() {
+                    IST.addData("TRIAL_TYPE","SEARCH_TRIAL") // More common approach is to add the data at the end of the trial.
+                    // By default addData will add the data to both the interaction data file and the jspsych data file
+
+                    if(count == 2){
+                        IST.addData("SOME_EXTRA_INFO",{"info":"extraStuff"}, true) // More common approach is to add the data at the end of the trial.
+                    }
+                    IST.trialCleanup(); // Call this at the end of every trial.
+
+                    IST.addGlobalData("TRIAL_TYPE","I've added global data!") // If we want to add to our overall datafile instead of a single trial we call addGlobalData
+                    
+                    // addData() allows us to add data to a single trial's row of data.
+                    // addGlobalData() allows us to add data to the final global data file, the one we download.
+                    // Keep in mind that in the global data file, each item in the array is considered a new trial 
+                    // TRIAL_INDEX:[0,1,2,3] = the first four trial numbers
+                    // INTERACTION_DATA:[{},{},{},{}] = the interaction data for each of the first four trials
+                    // You will most likely want to only use addData()
+                    // An example of using addGlobalData might be to store a date stamp.
+
+                    if (count == 2){
+                        IST.saveData()
+                    }
+                },
+                choices: ['e', 'i']
+            }
+
+            let count = 0
+            
+            function trialSetup() {
+                
+                IST.update = function (){                                         
+                    //console.log("Raycast Object:", IST.currentRaycastObject)
+                }
+
+                
+                let cubeObject = IST.findLoadedObject('DISTRACTOR_CUBE').clone()
+                console.log(IST.findLoadedObject('DISTRACTOR_CUBE'))
+                
+                cubeObject.name = 'DISTRACTOR_HIGH_1'
+                cubeObject.scale.set(0.5, 0.5,0.5)
+                cubeObject.position.set(-3.5, 3,0)
+                cubeObject.rotation.set(_.random(-6.28,6.28,true),_.random(-6.28,6.28,true),_.random(-6.28,6.28,true))
+                IST.addStimulusToScene(cubeObject);
+
+
+
+
+
+                let cubeObject2 = IST.findLoadedObject('DISTRACTOR_CUBE').clone()
+                cubeObject2.name = 'DISTRACTOR_LOW_1'
+                cubeObject2.scale.set(0.5, 0.5,0.5)
+                cubeObject2.position.set(3.5, 3, 0)
+                cubeObject2.rotation.set(_.random(-6.28,6.28,true),_.random(-6.28,6.28,true),_.random(-6.28,6.28,true))
+                IST.addStimulusToScene(cubeObject2);
+
+                
+                
+                /*
+                for(let i = 0; i < 8; i++){
+                    let newObj = IST.cloneObject(object)
+                    //newObj.scale.set(1.5,1.5,1.5)
+                    stimuliToPlace.push(newObj)
+                }
+                
+                IST.placeOnGrid({
+                    stimuli: stimuliToPlace,
+                    rows: 4,
+                    columns: 4,
+                    showDebugGrid: false,
+                    jitter: 0.1,
+                    randomRotation:true
+                })
+                */
+                
+                IST.camera.position.z = 150; 
+                IST.camera.lookAt(0,0,0)
+                
+                /*IST.enableDragToRotateControls(
+                    {
+                        //overallSensitivity:200,
+                        
+                        varySensitivity:true,
+                        
+                        sensitivityFlags:{
+                            "HIGH":34,
+                            "LOW":100
+                        }
+                    });*/
+
+                IST.enableDragControls();
+                //IST.enableOrbitControls();
+
+                //IST.setGazeContingentMaskColour('ashdfh')
+
+                IST.startTrial(); // This starts the animation loop
+                
+                
+                count++
+                
+            }
+
+            // Add trial to the jsPsych timeline
+            timeline.push(trial,trial);
+
+            // Run the jsPsych timeline
+            jsPsych.run(timeline); // Experiment begins now
+        }
+
+    </script>
+
+</body>
+
+</html>

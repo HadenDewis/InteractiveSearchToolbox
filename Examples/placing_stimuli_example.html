@@ -49,7 +49,9 @@
             let objectsForScene = []
 
             for (let i = 0; i < 16; i++) {
-                let newObj = IST.cloneObject(object) // Clone the object
+
+                if(i < 15){
+                    let newObj = IST.cloneObject(object) // Clone the object
 
                 // Use Three.js to change the colour of the objects randomly
                 newObj.traverse(function (child) {
@@ -61,6 +63,22 @@
                 newObj.scale.set(0.1, 0.1, 0.1) // Make the object smaller
 
                 objectsForScene.push(newObj); // Add it to our stimuli array
+
+                }else{
+                    let newObj = IST.cloneObject(IST.findLoadedObject('Models/T.glb')) // Clone the object
+
+                    // Use Three.js to change the colour of the objects randomly
+                    newObj.traverse(function (child) {
+                        if (child.isMesh) {
+                            child.material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xFFFFFF })
+                        }
+                    })
+
+                    newObj.scale.set(0.1, 0.1, 0.1) // Make the object smaller
+
+                    objectsForScene.push(newObj); // Add it to our stimuli array
+                }
+                
             }
 
             // Now we have the 16 stimuli for the trial, we can place them in the scene.
@@ -68,10 +86,15 @@
             // To do so, we place that array into one of the helper function
             // placeRandomly3D() will randomly place each object into the scene along all three axes.
             
+            console.log(IST.placeRandomly3D)
             IST.placeRandomly3D({
                 objectsToPlace: objectsForScene,
-                randomRotation: true,
-                spread: 3,
+                //randomRotation: true,
+                //randomRotateX:true,
+                //randomRotateY:true,
+                randomRotateZ:true,
+                spread: 1,
+                ignoreCollisions:true
             });
 
             // placeRandomly2D() will randomly place each object into the scene along only two axes.
@@ -84,6 +107,7 @@
             })
             */
 
+            IST.enableDragControls(); 
             IST.startTrial() // Don't forget to start the trial (animation loop)
         }
 

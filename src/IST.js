@@ -11,7 +11,7 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import _ from "lodash";
+import _, { forEach } from "lodash";
 
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
@@ -56,6 +56,9 @@ function lerp(a, b, t) {
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
+
+
+
 
 const BlurMaskShader = {
     uniforms: {
@@ -218,7 +221,27 @@ class InteractiveSearchToolbox {
             this.setValues(globalSettings, userSettings)
         }
 
+        this.preloadingManager = new THREE.LoadingManager();
+        
+        this.preloadingManager.onLoad = () => {
+            this.onPreloadFinished()
+        }
+
+        this.preloadingManager.onError = (url) => {
+            console.error('Error loading:', url);
+        };
+
+
+
         this.loadingManager = new THREE.LoadingManager();
+        this.loadingManager.onLoad = () => {
+            this.onLoadingManagerLoad()
+        }
+
+        this.loadingManager.onError = (url) => {
+            console.error('Error loading:', url);
+        };
+
         this.loadedModels = [];
         this.loadedTextures = [];
         this.loadedEnvs = [];
@@ -228,6 +251,7 @@ class InteractiveSearchToolbox {
 
         this.scene;
         this.camera;
+        this.ambientLight
         this.renderer;
         this.enableLighting = true//this.enableLighting
         this.interactiveCanvas;
@@ -243,6 +267,8 @@ class InteractiveSearchToolbox {
         this.vBlur
 
         this.mouseSensitivity = 0.002;
+        this.dragToRotateSensitivity = 200
+        this.sensitivityFlags = []
 
         this.blurSettings = {
             intensity: 1.5 // 1.0 is standard, 0.0 is no blur, 5.0+ is very heavy
@@ -254,6 +280,8 @@ class InteractiveSearchToolbox {
         this.raycaster.layers.set(0);
         this.pointer = new THREE.Vector2();
         this.pointerDelta = new THREE.Vector2();
+        this.mouseX = 0;
+        this.mouseY = 0;
         this.previousPointer = new THREE.Vector2();
         this.delta = 0
         this.currentFrameTime = 0
@@ -284,6 +312,31 @@ class InteractiveSearchToolbox {
         this.animationRequestID = null;
 
         this.objectsInScene = []
+        
+        this.shouldCollectData = true
+        this.realTimeTracking = false
+        this.currentTrialIndex = 0;
+        this.currentSceneInfo = [];
+        this.interactionData = {
+            IST_TRIAL_INDEX:[],
+            SCENE_INFO:[],
+            INTERACTION_DATA:[],
+        }
+        this.singleTrialInteractionData = {
+            TIMESTAMP:[],
+            INTERACTION_TIME:[],
+            CURRENT_OBJECT:[],
+            X_POS:[],
+            Y_POS:[],
+            Z_POS:[],
+            X_ROT:[],
+            Y_ROT:[],
+            Z_ROT:[],
+            W_ROT:[],
+            MOUSE_X_POS:[],
+            MOUSE_Y_POS:[]
+        }
+
 
         this.stats = new Stats();
         document.body.appendChild(this.stats.dom);
@@ -296,6 +349,76 @@ class InteractiveSearchToolbox {
 
         this.setupWarningMessage();
         this.setupToolbox();
+    }
+
+    onPreloadFinished(){
+        // Users manually update this in their own code.
+            
+    }
+
+    onLoadingManagerLoad(){
+        // Users do not touch this one.
+        this.turnOffLoadingScreen()
+        console.log('All files loaded')
+    }
+
+    enableDataCollection(userSettings = null){
+        const settings = {
+            realTimeTracking: true
+        }
+
+        // If new parameters have been provided, set them.
+        this.setValues(settings, userSettings)
+
+        this.shouldCollectData = true
+    }
+
+    disableDataCollection(){
+        this.shouldCollectData = false
+    }
+
+    async saveData(useFilePicker = false) {
+        const date = new Date();
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const filename = 'interactionData_' + day + '_' + month + '_' + year + '.json';
+        const json = JSON.stringify(this.interactionData, null, 2);
+
+        if (useFilePicker && window.showSaveFilePicker) {
+            try {
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }],
+                });
+                const writable = await fileHandle.createWritable();
+                await writable.write(json);
+                await writable.close();
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+                console.warn('showSaveFilePicker failed, falling back:', err);
+            }
+        }
+
+        // Default behaviour
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    getInteractiveData(stringify = false){
+        if(stringify){
+            return(JSON.stringify(this.interactionData))
+        }else{
+            return(this.interactionData)
+        }
     }
 
     setValues(defaultSettings, newSettingsObj) {
@@ -342,8 +465,8 @@ class InteractiveSearchToolbox {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(this.backgroundColor);
         if (globalSettings.enableAmbientLighting == true) {
-            const light = new THREE.AmbientLight(0x404040, 35); // soft white light
-            this.scene.add(light);
+            this.ambientLight = new THREE.AmbientLight(0x404040, 35); // soft white light
+            this.scene.add(this.ambientLight);
         }
 
         // Setup global camera object
@@ -431,6 +554,9 @@ class InteractiveSearchToolbox {
             this.pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
+            this.mouseX = event.clientX;
+            this.mouseY = event.clientY;
+
 
             // Calculate pointer delta
             this.pointerDelta.x = this.pointer.x - this.previousPointer.x;
@@ -474,6 +600,7 @@ class InteractiveSearchToolbox {
         this.interactiveCanvas.style.display = 'none';
         this.turnOffLoadingScreen();
     }
+
 
     // Show the FPS counter
     showDebugStats() {
@@ -611,9 +738,20 @@ class InteractiveSearchToolbox {
     dragToRotate(event, obj = null) {
         if (obj != null) {
             if (this.pointerDown) {
+                
+                let sensitivity = this.dragToRotateSensitivity;
+                let percentage = this.dragToRotateSensitivity/100
+
+                for (let i = 0; i < this.sensitivityFlags.length; i++) {
+                    if (obj.name.includes(this.sensitivityFlags[i][0])) {
+                        sensitivity = percentage * clamp(this.sensitivityFlags[i][1],0,100)
+                        break;
+                    }
+                }
+                
                 //Allow the cube to rotate with mouse movements
-                let xRotationAmount = (this.pointerDelta.x * 200) * this.delta;
-                let yRotationAmount = ((this.pointerDelta.y * 200) * this.delta) * -1;
+                let xRotationAmount = (this.pointerDelta.x * sensitivity) * this.delta;
+                let yRotationAmount = ((this.pointerDelta.y * sensitivity) * this.delta) * -1;
 
                 // Camera-relative axes
                 const cameraRight = xAxis.applyQuaternion(this.camera.quaternion);
@@ -1351,7 +1489,7 @@ class InteractiveSearchToolbox {
     }
 
     preloadDefaultHDRI(pathToHDRI) {
-        const hdrEquirectangularMap = new HDRLoader(this.loadingManager);
+        const hdrEquirectangularMap = new HDRLoader(this.preloadingManager);
         hdrEquirectangularMap.load(pathToHDRI, (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
             texture.minFilter = THREE.LinearFilter;
@@ -1366,7 +1504,7 @@ class InteractiveSearchToolbox {
     }
 
     preloadHDRI(pathToHDRI) {
-        const hdrEquirectangularMap = new RGBELoader(this.loadingManager);
+        const hdrEquirectangularMap = new RGBELoader(this.preloadingManager);
 
         hdrEquirectangularMap.load(pathToHDRI, (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -1379,7 +1517,7 @@ class InteractiveSearchToolbox {
     }
 
     preLoadTextures(texturesToLoad) {
-        const textureLoader = new THREE.TextureLoader(this.loadingManager);
+        const textureLoader = new THREE.TextureLoader(this.preloadingManager);
 
         for (let i = 0; i < texturesToLoad.length; i++) {
             textureLoader.load(texturesToLoad[i], (texture) => {
@@ -1388,7 +1526,50 @@ class InteractiveSearchToolbox {
         }
     }
 
+    getFileName(filePath){
+        return(filePath.split('/').at(-1).replace(/\.[^.]+$/, ''))
+    }
+
     preLoadModels(modelsToLoad) {
+        /////////////////////////////////////////////////////////////////////////
+        // LOAD 3D MODELS ///////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////// 
+        const objectLoader = new GLTFLoader(this.preloadingManager);
+        //const arrayToSaveTo = []
+
+
+        for (let i = 0; i < modelsToLoad.length; i++) {// Load a glTF resource
+            objectLoader.load(
+                // resource URL
+                modelsToLoad[i],
+                // called when the resource is loaded
+                (gltf) => {
+                    let model = gltf.scene;
+
+                    
+                    const modelName = this.getFileName(modelsToLoad[i])
+                    model.name = modelName
+                    this.loadedModels.push(model)
+                },
+
+                function (xhr) {
+                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+                },
+                // called when loading has errors
+                function (error) {
+                    console.log('An error happened', error);
+                }
+            )
+        };
+        /////////////////////////////////////////////////////////////////////////
+    }
+
+
+    loadModel(modelsToLoad, showLoadingScreen = false) {
+
+        if(showLoadingScreen){
+            this.turnOnLoadingScreen()
+        }
         /////////////////////////////////////////////////////////////////////////
         // LOAD 3D MODELS ///////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////// 
@@ -1403,7 +1584,10 @@ class InteractiveSearchToolbox {
                 // called when the resource is loaded
                 (gltf) => {
                     let model = gltf.scene;
-                    model.name = modelsToLoad[i]
+
+                    
+                    const modelName = this.getFileName(modelsToLoad[i])
+                    model.name = modelName
                     this.loadedModels.push(model)
                 },
 
@@ -1462,14 +1646,40 @@ class InteractiveSearchToolbox {
     }
 
     trialCleanup() {
+
+        this.stopAnimationLoop()
+
+        // Save interaction data internally
+        this.interactionData["IST_TRIAL_INDEX"].push(this.currentTrialIndex)
+        this.interactionData["SCENE_INFO"].push(this.currentSceneInfo)
+        this.interactionData["INTERACTION_DATA"].push(this.singleTrialInteractionData)
+
         this.stimuliInScene.forEach(object => {
             this.removeStimulusFromScene(object)
         });
         this.interactiveCanvas.style.display = 'none'
+
+        this.currentTrialIndex++;
+
+        
+        this.getCurrentTrialData_JSPsych().IST_TRIAL_INDEX = this.currentTrialIndex
+
+        const jspsychData = jsPsych.data.get()
+        this.addGlobalData("JS_PSYCH_DATA",jspsychData)
+        
+        console.log(this.getInteractiveData())
+    }
+
+    getCurrentTrialData_JSPsych(){
+        const jspsychData = jsPsych.data.get()
+        const jsPsychCurrentTrialData = jspsychData.trials[jspsychData.trials.length - 1]
+        return(jsPsychCurrentTrialData)
     }
 
     animationLoop(time) {
         this.animationRequestID = requestAnimationFrame((time) => this.animationLoop(time));
+        this.timer.update()
+        this.currentFrameTime = this.timer.getElapsed() * 1000;
 
         if (this.gazeContingentEnabled) {
             if (this.maskType == 'blur') {
@@ -1483,17 +1693,169 @@ class InteractiveSearchToolbox {
             this.renderer.render(this.scene, this.camera);
         }
 
+        
+
+        this.collectData();
         this.update() // Process loop - user can put their own code here
+        this.delta = this.timer.getDelta();
         
         if (this.checkStats) { this.stats.update(); }
-        this.delta = this.timer.getDelta();
-        this.currentFrameTime = this.timer.getElapsed() * 1000;
-        this.timer.update()
-        console.log(this.currentFrameTime)
     }
 
+    
+    addData(name, data, userSettings = null) {
+        
+        let settings = {
+            stringify: true,
+            addToJsPsych:true,
+        };
+
+        // If new parameters have been provided, set them.
+        if (userSettings != null) {
+            this.setValues(settings, userSettings)
+        }
+        
+
+        if(settings.stringify){
+            data = JSON.stringify(data)
+        }
+
+        this.singleTrialInteractionData[name] = []
+        this.singleTrialInteractionData[name].push(data);
+        
+        try {
+            if(settings.addToJsPsych){
+                this.getCurrentTrialData_JSPsych()[name] = []
+                this.getCurrentTrialData_JSPsych()[name].push(data)
+            }
+        } catch (error) {
+            console.error(error)
+            console.warn("Did you call addData() outside of on_start() or on_finish()? addData() will only add data to the current trial's row. Data will not save if there is no row to save to. \n\nPerhaps you need to use addGlobalData()?")
+        }
+    }
+
+    addGlobalData(name, data, stringify = true) {
+        if(stringify){
+            data = JSON.stringify(data)
+        }
+
+        try {
+            this.interactionData[name] = []
+            this.interactionData[name].push(data);
+        } catch (error) {
+            console.error(error)
+        }
+        
+        
+
+        //this.getCurrentTrialData_JSPsych()[name] = []
+        //this.getCurrentTrialData_JSPsych()[name].push(data)
+    }
+
+    collectData(){
+        if(this.shouldCollectData){
+            
+            if(this.realTimeTracking){
+                this.singleTrialInteractionData['TIMESTAMP'].push(this.currentFrameTime)
+            }
+
+            // If using orbit controls, current object becomes the camera
+            // If using drag and drop nothing changes
+            // If using mask, change selectedObject to the raycast object since they can never click an object
+
+
+            if(this.selectedObject != null){
+                this.singleTrialInteractionData['INTERACTION_TIME'].push(this.currentFrameTime)
+                this.singleTrialInteractionData['CURRENT_OBJECT'].push(this.selectedObject.name)
+
+                this.singleTrialInteractionData['X_POS'].push(this.selectedObject.position.x)
+                this.singleTrialInteractionData['Y_POS'].push(this.selectedObject.position.y)
+                this.singleTrialInteractionData['Z_POS'].push(this.selectedObject.position.z)
+                
+                this.singleTrialInteractionData['X_ROT'].push(this.selectedObject.quaternion.x)
+                this.singleTrialInteractionData['Y_ROT'].push(this.selectedObject.quaternion.y)
+                this.singleTrialInteractionData['Z_ROT'].push(this.selectedObject.quaternion.z)
+                this.singleTrialInteractionData['W_ROT'].push(this.selectedObject.quaternion.w)
+
+                this.singleTrialInteractionData['MOUSE_X_POS'].push(this.mouseX)
+                this.singleTrialInteractionData['MOUSE_Y_POS'].push(this.mouseY)
+            }   
+        }
+    }
+
+    getSceneData(){
+        
+        const SCENE_INFO = []
+        
+        for(let i = 0; i < this.scene.children.length; i++){  
+            const child = this.scene.children[i]
+            
+
+            if(child.isMesh | child.isGroup){
+                const jsonInfo = {
+                    TYPE:child.type,
+                    NAME:child.name,
+                    POSITION:{
+                        x:child.position.x,
+                        y:child.position.y,
+                        z:child.position.z},
+                    QUATERNION:{
+                        x:child.quaternion.x,
+                        y:child.quaternion.y,
+                        z:child.quaternion.z,
+                        w:child.quaternion.w
+                    }
+                        
+                }
+                SCENE_INFO.push(jsonInfo);
+            }
+
+            else if(child.isLight){
+                const jsonInfo = {
+                    TYPE:child.type,
+                    POSITION:{
+                        x:child.position.x,
+                        y:child.position.y,
+                        z:child.position.z},
+                    QUATERNION:{
+                        x:child.quaternion.x,
+                        y:child.quaternion.y,
+                        z:child.quaternion.z,
+                        w:child.quaternion.w
+                    },
+                    COLOR: '#' + child.color.getHexString()
+                }
+                SCENE_INFO.push(jsonInfo);
+            }
+
+            else if(child.isCamera){
+                const jsonInfo = {
+                    TYPE:child.type,
+                    POSITION:{
+                        x:child.position.x,
+                        y:child.position.y,
+                        z:child.position.z},
+                    QUATERNION:{
+                        x:child.quaternion.x,
+                        y:child.quaternion.y,
+                        z:child.quaternion.z,
+                        w:child.quaternion.w
+                    },
+                    FOV:child.fov,
+                    ASPECT:child.aspect,
+                    NEAR:child.near,
+                    FAR:child.far
+                }
+                SCENE_INFO.push(jsonInfo);
+            }
+
+        }
+
+        return(SCENE_INFO)
+    }
+
+
     // ADD POINTER LOCK INTO THE FP CONTROLS
-    // ADD AN UPDATE FUNCTION SO THAT PEOPLE CAN ADD THEIR OWN CODE TO THE ANIMATION LOOP 
     update() {
 
     }
@@ -1512,8 +1874,29 @@ class InteractiveSearchToolbox {
 
     startTrial() {
         //this.timer.start();
-        this.timer.reset()
+        // Reset interaction data per trial
+        this.singleTrialInteractionData = {
+            TIMESTAMP:[],
+            INTERACTION_TIME:[],
+            CURRENT_OBJECT:[],
+            X_POS:[],
+            Y_POS:[],
+            Z_POS:[],
+            X_ROT:[],
+            Y_ROT:[],
+            Z_ROT:[],
+            W_ROT:[],
+            MOUSE_X_POS:[],
+            MOUSE_Y_POS:[]
+        }
+
+        this.timer.dispose();
+        this.timer = new THREE.Timer();
+        this.timer.connect( document );
+        //this.timer.start()
+        
         this.startAnimationLoop();
+        this.currentSceneInfo = this.getSceneData()
         this.interactiveCanvas.style.display = 'flex'
     }
 
@@ -1553,7 +1936,39 @@ class InteractiveSearchToolbox {
         this.dragControlsEnabled = false;
     }
 
-    enableDragToRotateControls() {
+    enableDragToRotateControls(userSettings = null) {
+        
+        // Default settings
+        let settings = {
+            overallSensitivity: this.dragToRotateSensitivity,
+            varySensitivity:false,
+            sensitivityFlags:null
+        };
+
+        // If new parameters have been provided, set them.
+        if (userSettings != null) {
+            this.setValues(settings, userSettings)
+
+            if(settings.overallSensitivity != this.dragToRotateSensitivity){
+                this.dragToRotateSensitivity = settings.overallSensitivity;
+            }
+        }
+
+        if(settings.varySensitivity){
+            if(settings.sensitivityFlags != null){
+                this.sensitivityFlags = []
+                
+                
+                // For each key value pair in sensitivity flags,
+               Object.keys(settings.sensitivityFlags).forEach((key) => {
+                    let flag_string = key;
+                    let sensitivityVal = settings.sensitivityFlags[key];
+                    this.sensitivityFlags.push([flag_string, sensitivityVal]);
+                });
+            }
+        }
+
+
         this.disableOrbitControls()
         this.disableDragControls()
         this.disableGazeContingentControls()
@@ -1562,6 +1977,8 @@ class InteractiveSearchToolbox {
         xAxis.set(1, 0, 0)
         yAxis.set(0, 1, 0)
         zAxis.set(0, 0, 1)
+
+
 
         this.dragToRotateEnabled = true;
     }
@@ -1703,7 +2120,10 @@ class InteractiveSearchToolbox {
         this.gazeContingentEnabled = false;
     }
 
-    turnOnLoadingScreen() {
+    turnOnLoadingScreen(textToDisplay = null) {
+        if(textToDisplay){
+            document.getElementById('loadingText').innerHTML = textToDisplay
+        }
         this.loadingScreen.style.display = 'flex';
     }
 
@@ -2086,6 +2506,14 @@ class InteractiveSearchToolbox {
         }
     }
 
+
+    setOverallDragToRotateSensitivity(value){
+        if(!isNaN(value)){
+            this.dragToRotateSensitivity = value
+        }else{
+            return
+        }
+    }
 }
 
 // If you want it to be the ONLY thing exported:
